@@ -1,0 +1,888 @@
+<title>Bracket — mocks de operação de torneio</title>
+<style>
+  :root {
+    /* ground: tinta de estádio à noite, viés azul-esverdeado — escolhida, não preta */
+    --ground: #0E1518;
+    --surface: #141E22;
+    --surface-2: #1B272C;
+    --surface-3: #223138;
+    --line: rgba(230, 238, 235, 0.09);
+    --line-2: rgba(230, 238, 235, 0.16);
+
+    --ink: #EAF0EE;
+    --ink-dim: #AEBAB7;
+    --ink-mute: #6E7C79;
+
+    /* acento único: âmbar de refletor de sódio */
+    --amber: #F2A93B;
+    --amber-ink: #FFC978;
+    --amber-soft: rgba(242, 169, 59, 0.13);
+    --amber-line: rgba(242, 169, 59, 0.38);
+
+    /* ouro: só para o troféu / campeão */
+    --gold: #E7C66A;
+
+    /* semânticos — só nos chips de resultado, separados do acento */
+    --win: #55B87E;
+    --draw: #7C8A87;
+    --loss: #E06B62;
+
+    --serif: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
+    --sans: -apple-system, "SF Pro Text", system-ui, "Segoe UI", Roboto, sans-serif;
+    --mono: ui-monospace, "SF Mono", "SFMono-Regular", Menlo, Consolas, monospace;
+
+    --r-lg: 16px;
+    --r-md: 11px;
+    --r-sm: 7px;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background:
+      radial-gradient(1200px 520px at 50% -8%, rgba(242, 169, 59, 0.07), transparent 60%),
+      radial-gradient(900px 600px at 85% 10%, rgba(45, 96, 104, 0.16), transparent 55%),
+      var(--ground);
+    color: var(--ink);
+    font-family: var(--sans);
+    -webkit-font-smoothing: antialiased;
+    line-height: 1.5;
+  }
+
+  .deck {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 72px 28px 96px;
+  }
+
+  /* ---------- deck header ---------- */
+  .deck-head { margin-bottom: 60px; }
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--amber);
+    margin: 0 0 18px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .eyebrow::after {
+    content: "";
+    height: 1px;
+    flex: 1;
+    background: linear-gradient(90deg, var(--amber-line), transparent);
+    max-width: 220px;
+  }
+  .deck-title {
+    font-family: var(--serif);
+    font-weight: 600;
+    font-size: clamp(34px, 5vw, 56px);
+    line-height: 1.03;
+    letter-spacing: -0.015em;
+    margin: 0 0 20px;
+    text-wrap: balance;
+    max-width: 20ch;
+  }
+  .deck-title em { color: var(--amber-ink); font-style: italic; }
+  .deck-sub {
+    color: var(--ink-dim);
+    font-size: 17px;
+    max-width: 62ch;
+    margin: 0;
+  }
+  .deck-sub b { color: var(--ink); font-weight: 600; }
+
+  /* ---------- screen block ---------- */
+  .screen { margin-top: 66px; }
+  .screen-cap {
+    display: flex;
+    align-items: baseline;
+    gap: 16px;
+    margin: 0 4px 18px;
+    flex-wrap: wrap;
+  }
+  .cap-no {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--amber);
+    letter-spacing: 0.1em;
+  }
+  .cap-title {
+    font-family: var(--serif);
+    font-size: 21px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+  .cap-note { color: var(--ink-mute); font-size: 14px; }
+
+  /* ---------- app shell ---------- */
+  .app {
+    display: grid;
+    grid-template-columns: 62px 1fr;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--r-lg);
+    overflow: hidden;
+    box-shadow:
+      0 1px 0 rgba(255, 255, 255, 0.03) inset,
+      0 40px 80px -40px rgba(0, 0, 0, 0.7),
+      0 2px 6px rgba(0, 0, 0, 0.4);
+  }
+  .rail {
+    background: linear-gradient(180deg, rgba(255,255,255,0.02), transparent);
+    border-right: 1px solid var(--line);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    padding: 16px 0;
+  }
+  .mark {
+    width: 34px; height: 34px;
+    border-radius: 9px;
+    background: linear-gradient(150deg, var(--amber), #C9791F);
+    display: grid; place-items: center;
+    color: #1a1205; font-weight: 800; font-size: 17px;
+    font-family: var(--serif);
+    box-shadow: 0 4px 14px -4px rgba(242,169,59,0.6);
+    margin-bottom: 14px;
+  }
+  .rail-btn {
+    width: 40px; height: 40px;
+    border-radius: 10px;
+    display: grid; place-items: center;
+    color: var(--ink-mute);
+    border: 1px solid transparent;
+  }
+  .rail-btn svg { width: 19px; height: 19px; display: block; }
+  .rail-btn.on {
+    color: var(--amber-ink);
+    background: var(--amber-soft);
+    border-color: var(--amber-line);
+  }
+  .rail-spacer { flex: 1; }
+
+  .main { min-width: 0; }
+
+  /* topbar */
+  .topbar {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    padding: 16px 22px;
+    border-bottom: 1px solid var(--line);
+    background: linear-gradient(180deg, rgba(242,169,59,0.03), transparent);
+  }
+  .tb-id { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+  .tb-name {
+    font-family: var(--serif);
+    font-size: 18px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    display: flex; align-items: center; gap: 9px;
+  }
+  .tb-name .trophy { font-size: 15px; filter: saturate(0.9); }
+  .tb-phase {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ink-mute);
+  }
+  .tb-spacer { flex: 1; }
+  .phase-pills { display: flex; gap: 7px; }
+  .pp {
+    font-family: var(--mono);
+    font-size: 10.5px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 6px 11px;
+    border-radius: 999px;
+    border: 1px solid var(--line-2);
+    color: var(--ink-mute);
+  }
+  .pp.done { color: var(--ink-dim); }
+  .pp.now { color: #1a1205; background: var(--amber); border-color: var(--amber); font-weight: 700; }
+
+  .live {
+    display: inline-flex; align-items: center; gap: 7px;
+    font-family: var(--mono);
+    font-size: 11px; letter-spacing: 0.14em;
+    color: var(--loss);
+    padding: 6px 11px;
+    border: 1px solid rgba(224,107,98,0.35);
+    border-radius: 999px;
+    background: rgba(224,107,98,0.08);
+  }
+  .live .dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--loss);
+    box-shadow: 0 0 0 0 rgba(224,107,98,0.6);
+    animation: pulse 1.8s infinite;
+  }
+  @keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(224,107,98,0.55); }
+    70% { box-shadow: 0 0 0 7px rgba(224,107,98,0); }
+    100% { box-shadow: 0 0 0 0 rgba(224,107,98,0); }
+  }
+
+  /* ---------- overview body ---------- */
+  .ov {
+    display: grid;
+    grid-template-columns: 1.55fr 1fr;
+    gap: 0;
+  }
+  .ov-left { padding: 22px; border-right: 1px solid var(--line); min-width: 0; }
+  .ov-right { padding: 22px; display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+
+  .block-label {
+    font-family: var(--mono);
+    font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase;
+    color: var(--ink-mute);
+    margin: 0 0 14px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .block-label .grp {
+    color: var(--amber-ink);
+    border: 1px solid var(--amber-line);
+    border-radius: 5px;
+    padding: 1px 7px;
+  }
+
+  /* standings table */
+  .table-wrap { overflow-x: auto; }
+  table.stand {
+    width: 100%;
+    border-collapse: collapse;
+    font-variant-numeric: tabular-nums;
+  }
+  .stand thead th {
+    font-family: var(--mono);
+    font-size: 10.5px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-mute);
+    text-align: right;
+    padding: 0 0 11px;
+  }
+  .stand thead th.club { text-align: left; }
+  .stand tbody td {
+    padding: 12px 0;
+    border-top: 1px solid var(--line);
+    font-family: var(--mono);
+    font-size: 14px;
+    text-align: right;
+    color: var(--ink-dim);
+  }
+  .stand tbody tr:first-child td { border-top: none; }
+  .stand td.pos {
+    text-align: left;
+    width: 34px;
+    position: relative;
+    color: var(--ink-mute);
+    font-size: 13px;
+  }
+  .stand tr.q td.pos { color: var(--amber-ink); font-weight: 700; }
+  .stand tr.q td.pos::before {
+    content: "";
+    position: absolute; left: -22px; top: 6px; bottom: 6px;
+    width: 3px; border-radius: 2px;
+    background: var(--amber);
+  }
+  .stand td.club {
+    text-align: left;
+    font-family: var(--sans);
+    color: var(--ink);
+    font-size: 15px;
+    font-weight: 550;
+    white-space: nowrap;
+  }
+  .stand td.club .flag { font-family: var(--sans); margin-right: 10px; font-size: 17px; }
+  .stand td.pts { color: var(--ink); font-weight: 700; font-size: 15px; padding-left: 18px; }
+  .stand td.gd .up { color: var(--win); }
+  .stand td.gd .dn { color: var(--loss); }
+  .stand tbody tr:hover td { background: rgba(255,255,255,0.015); }
+
+  .form { display: inline-flex; gap: 4px; padding-left: 16px; }
+  .fc {
+    width: 18px; height: 18px; border-radius: 5px;
+    display: grid; place-items: center;
+    font-family: var(--mono); font-size: 10px; font-weight: 700;
+    color: var(--ground);
+  }
+  .fc.w { background: var(--win); }
+  .fc.d { background: var(--draw); }
+  .fc.l { background: var(--loss); }
+
+  .qline {
+    display: flex; align-items: center; gap: 12px;
+    margin: 4px 0 -2px;
+    padding: 7px 0;
+  }
+  .qline .txt {
+    font-family: var(--mono);
+    font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--amber);
+    white-space: nowrap;
+  }
+  .qline .ln { flex: 1; height: 1px; background: repeating-linear-gradient(90deg, var(--amber-line) 0 6px, transparent 6px 12px); }
+
+  .tiebreak {
+    margin-top: 18px;
+    display: flex; gap: 12px;
+    padding: 13px 15px;
+    background: var(--amber-soft);
+    border: 1px solid var(--amber-line);
+    border-radius: var(--r-md);
+    font-size: 13.5px;
+    color: var(--ink-dim);
+    line-height: 1.45;
+  }
+  .tiebreak .di { color: var(--amber); flex: none; }
+  .tiebreak b { color: var(--ink); font-weight: 650; }
+  .tiebreak .mono { font-family: var(--mono); color: var(--amber-ink); }
+
+  /* right column cards */
+  .card {
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+    border-radius: var(--r-md);
+    padding: 16px;
+  }
+  .card.live-card { border-color: rgba(224,107,98,0.28); background: linear-gradient(180deg, rgba(224,107,98,0.05), var(--surface-2)); }
+  .card-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+  .card-kick { font-family: var(--mono); font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-mute); }
+
+  .fixture { display: flex; align-items: center; gap: 12px; }
+  .fx-team { flex: 1; display: flex; align-items: center; gap: 10px; font-weight: 600; font-size: 15px; }
+  .fx-team.away { flex-direction: row-reverse; text-align: right; }
+  .fx-team .flag { font-size: 22px; }
+  .fx-score {
+    font-family: var(--mono); font-weight: 700; font-size: 22px;
+    letter-spacing: 0.04em;
+    color: var(--ink);
+    min-width: 62px; text-align: center;
+    font-variant-numeric: tabular-nums;
+  }
+  .fx-score .min { display:block; font-size: 10px; letter-spacing: 0.1em; color: var(--loss); font-weight: 600; margin-top: 2px; }
+
+  .next-row { display: flex; align-items: center; gap: 12px; }
+  .next-vs { font-family: var(--mono); color: var(--ink-mute); font-size: 12px; }
+  .decider {
+    margin-top: 13px; padding-top: 13px; border-top: 1px dashed var(--line-2);
+    font-size: 12.5px; color: var(--ink-mute);
+  }
+  .decider b { color: var(--amber-ink); font-weight: 600; }
+
+  .stat-row { display: flex; gap: 10px; }
+  .stat {
+    flex: 1; background: var(--surface); border: 1px solid var(--line);
+    border-radius: var(--r-sm); padding: 12px 13px;
+  }
+  .stat .n { font-family: var(--mono); font-size: 22px; font-weight: 700; color: var(--ink); font-variant-numeric: tabular-nums; }
+  .stat .l { font-size: 11px; color: var(--ink-mute); margin-top: 3px; letter-spacing: 0.02em; }
+
+  /* ---------- bracket ---------- */
+  .bracket-body { padding: 26px 22px 30px; }
+  .bracket-scroll { overflow-x: auto; padding-bottom: 6px; }
+  .bracket {
+    display: flex;
+    min-width: 820px;
+    gap: 30px;
+  }
+  .round { display: flex; flex-direction: column; justify-content: space-around; flex: 1; gap: 16px; }
+  .round-hd {
+    font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.16em; text-transform: uppercase;
+    color: var(--ink-mute); text-align: center; padding-bottom: 6px;
+    border-bottom: 1px solid var(--line);
+    margin-bottom: 4px;
+  }
+  .round.final-col { justify-content: center; }
+
+  .mtch {
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+    border-radius: var(--r-md);
+    padding: 4px;
+    position: relative;
+  }
+  .mtch.livem { border-color: rgba(224,107,98,0.4); box-shadow: 0 0 0 1px rgba(224,107,98,0.18); }
+  .side {
+    display: flex; align-items: center; gap: 9px;
+    padding: 9px 11px; border-radius: var(--r-sm);
+  }
+  .side + .side { margin-top: 2px; }
+  .side .flag { font-size: 17px; width: 20px; }
+  .side .nm { flex: 1; font-size: 13.5px; font-weight: 550; color: var(--ink-dim); white-space: nowrap; }
+  .side .sc { font-family: var(--mono); font-size: 14px; font-weight: 700; color: var(--ink-mute); font-variant-numeric: tabular-nums; }
+  .side.win .nm { color: var(--ink); }
+  .side.win .sc { color: var(--amber-ink); }
+  .side.win { background: rgba(242,169,59,0.06); }
+  .side.out .nm, .side.out .sc { color: var(--ink-mute); opacity: 0.72; }
+  .side.tbd .nm { color: var(--ink-mute); font-style: italic; font-weight: 400; }
+  .side .pen { font-family: var(--mono); font-size: 10px; color: var(--ink-mute); margin-left: 2px; }
+  .mtch-tag {
+    position: absolute; top: -8px; left: 12px;
+    font-family: var(--mono); font-size: 9px; letter-spacing: 0.12em; text-transform: uppercase;
+    padding: 2px 7px; border-radius: 4px;
+    background: var(--surface-3); color: var(--ink-mute); border: 1px solid var(--line);
+  }
+  .mtch-tag.lv { color: var(--loss); border-color: rgba(224,107,98,0.4); background: rgba(224,107,98,0.1); }
+
+  .champ {
+    border: 1px solid var(--amber-line);
+    background: linear-gradient(180deg, rgba(231,198,106,0.09), var(--surface-2));
+    border-radius: var(--r-md);
+    padding: 18px 14px; text-align: center;
+  }
+  .champ .cup { font-size: 26px; }
+  .champ .cl { font-family: var(--mono); font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--gold); margin-top: 8px; }
+  .champ .cw { font-family: var(--serif); font-size: 15px; color: var(--ink-mute); font-style: italic; margin-top: 4px; }
+
+  /* ---------- console ---------- */
+  .console-body { display: grid; grid-template-columns: 1fr 1fr; gap: 0; }
+  .con-left { padding: 22px; border-right: 1px solid var(--line); }
+  .con-right { padding: 22px; background: linear-gradient(180deg, rgba(242,169,59,0.03), transparent); }
+
+  .con-match {
+    display: flex; align-items: center; justify-content: center; gap: 16px;
+    padding: 18px; background: var(--surface-2); border: 1px solid var(--line);
+    border-radius: var(--r-md); margin-bottom: 18px;
+  }
+  .con-team { display: flex; flex-direction: column; align-items: center; gap: 7px; width: 92px; }
+  .con-team .flag { font-size: 30px; }
+  .con-team .nm { font-size: 13px; font-weight: 600; }
+  .stepper { display: flex; align-items: center; gap: 8px; }
+  .stepper button {
+    width: 28px; height: 28px; border-radius: 7px;
+    background: var(--surface-3); border: 1px solid var(--line-2);
+    color: var(--ink-dim); font-size: 16px; cursor: pointer; line-height: 1;
+  }
+  .stepper button:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
+  .stepper .val { font-family: var(--mono); font-size: 30px; font-weight: 700; width: 34px; text-align: center; font-variant-numeric: tabular-nums; }
+  .con-x { font-family: var(--mono); color: var(--ink-mute); font-size: 14px; }
+
+  .field { margin-bottom: 15px; }
+  .field > label { display: block; font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-mute); margin-bottom: 8px; }
+  .seg { display: flex; gap: 6px; }
+  .seg button {
+    flex: 1; padding: 9px; border-radius: var(--r-sm);
+    background: var(--surface-2); border: 1px solid var(--line);
+    color: var(--ink-mute); font-size: 12.5px; font-family: var(--sans); cursor: pointer;
+  }
+  .seg button.sel { background: var(--surface-3); color: var(--ink); border-color: var(--line-2); }
+
+  .btn-primary {
+    width: 100%; padding: 13px; border-radius: var(--r-md);
+    background: var(--amber); color: #1a1205; border: none;
+    font-family: var(--sans); font-weight: 700; font-size: 14px; cursor: pointer;
+    box-shadow: 0 8px 22px -8px rgba(242,169,59,0.6);
+    display: flex; align-items: center; justify-content: center; gap: 9px;
+  }
+  .btn-primary:focus-visible { outline: 2px solid var(--amber-ink); outline-offset: 3px; }
+  .btn-note { text-align: center; font-size: 11.5px; color: var(--ink-mute); margin-top: 11px; font-family: var(--mono); letter-spacing: 0.02em; }
+
+  .preview-hd {
+    font-family: var(--mono); font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--amber); margin: 0 0 4px; display: flex; align-items: center; gap: 8px;
+  }
+  .preview-sub { font-size: 12.5px; color: var(--ink-mute); margin: 0 0 16px; }
+
+  .delta { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-md); overflow: hidden; }
+  .delta-row {
+    display: grid; grid-template-columns: 26px 1fr auto auto; align-items: center; gap: 12px;
+    padding: 12px 15px; border-top: 1px solid var(--line);
+    font-variant-numeric: tabular-nums;
+  }
+  .delta-row:first-child { border-top: none; }
+  .delta-row .p { font-family: var(--mono); font-size: 13px; color: var(--ink-mute); }
+  .delta-row .t { display: flex; align-items: center; gap: 9px; font-weight: 600; font-size: 14px; }
+  .delta-row .t .flag { font-size: 17px; }
+  .delta-row .move { font-family: var(--mono); font-size: 12px; display: flex; align-items: center; gap: 5px; }
+  .delta-row .move.upr { color: var(--win); }
+  .delta-row .move.dnr { color: var(--loss); }
+  .delta-row .ptsv { font-family: var(--mono); font-weight: 700; font-size: 14px; color: var(--ink); }
+  .delta-row.rise { background: rgba(85,184,126,0.05); }
+  .delta-row.fall { background: rgba(224,107,98,0.05); }
+
+  .audit { margin-top: 18px; }
+  .audit-hd { font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-mute); margin-bottom: 11px; }
+  .audit-item { display: flex; gap: 11px; padding: 7px 0; font-size: 12.5px; color: var(--ink-dim); align-items: baseline; }
+  .audit-item .tm { font-family: var(--mono); font-size: 11px; color: var(--ink-mute); flex: none; width: 42px; }
+  .audit-item .dt { width: 6px; height: 6px; border-radius: 50%; background: var(--amber); flex: none; transform: translateY(-1px); }
+  .audit-item.mut .dt { background: var(--ink-mute); }
+
+  .tx-note {
+    margin-top: 18px; padding: 12px 14px; border-radius: var(--r-md);
+    border: 1px dashed var(--line-2); font-size: 12.5px; color: var(--ink-mute);
+    display: flex; gap: 10px; line-height: 1.45;
+  }
+  .tx-note code { font-family: var(--mono); color: var(--amber-ink); font-size: 12px; }
+
+  .deck-foot {
+    margin-top: 64px; padding-top: 26px; border-top: 1px solid var(--line);
+    color: var(--ink-mute); font-size: 13.5px; max-width: 68ch;
+  }
+  .deck-foot b { color: var(--ink-dim); font-weight: 600; }
+
+  @media (max-width: 860px) {
+    .app { grid-template-columns: 1fr; }
+    .rail { flex-direction: row; border-right: none; border-bottom: 1px solid var(--line); padding: 10px 14px; }
+    .mark { margin-bottom: 0; }
+    .rail-spacer { display: none; }
+    .ov, .console-body { grid-template-columns: 1fr; }
+    .ov-left, .con-left { border-right: none; border-bottom: 1px solid var(--line); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .live .dot { animation: none; }
+  }
+</style>
+
+<div class="deck">
+  <header class="deck-head">
+    <p class="eyebrow">Mock de conceito · Bracket</p>
+    <h1 class="deck-title">Operar um torneio como quem <em>narra</em> um.</h1>
+    <p class="deck-sub">Três telas de alta fidelidade da ferramenta de operação de torneios. O coração do produto não é a estética — é o <b>estado derivado sempre correto</b>: classificação, critérios de desempate e avanço de chave que se recalculam, em transação, a cada resultado lançado. Estas telas mostram como isso aparece para quem opera.</p>
+  </header>
+
+  <!-- ================= SCREEN 1 — OVERVIEW ================= -->
+  <section class="screen">
+    <div class="screen-cap">
+      <span class="cap-no">01</span>
+      <span class="cap-title">Visão geral da rodada</span>
+      <span class="cap-note">— classificação ao vivo, linha de classificação e desempate explícito</span>
+    </div>
+
+    <div class="app">
+      <nav class="rail" aria-label="Navegação">
+        <div class="mark">B</div>
+        <div class="rail-btn on" title="Visão geral"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg></div>
+        <div class="rail-btn" title="Grupos"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></div>
+        <div class="rail-btn" title="Chaveamento"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5h6v14H4M10 12h5M15 5h5M15 19h5"/></svg></div>
+        <div class="rail-btn" title="Console"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="8" x2="20" y2="8"/><circle cx="9" cy="8" r="2.4" fill="var(--surface)"/><line x1="4" y1="16" x2="20" y2="16"/><circle cx="15" cy="16" r="2.4" fill="var(--surface)"/></svg></div>
+        <div class="rail-spacer"></div>
+      </nav>
+
+      <div class="main">
+        <div class="topbar">
+          <div class="tb-id">
+            <div class="tb-name"><span class="trophy">🏆</span> Copa Atlas 2026</div>
+            <div class="tb-phase">Fase de grupos · Rodada 2 de 3</div>
+          </div>
+          <div class="tb-spacer"></div>
+          <div class="phase-pills">
+            <span class="pp now">Grupos</span>
+            <span class="pp">Quartas</span>
+            <span class="pp">Semis</span>
+            <span class="pp">Final</span>
+          </div>
+        </div>
+
+        <div class="ov">
+          <div class="ov-left">
+            <p class="block-label">Classificação <span class="grp">Grupo A</span></p>
+            <div class="table-wrap">
+              <table class="stand">
+                <thead>
+                  <tr>
+                    <th class="pos">#</th>
+                    <th class="club">Clube</th>
+                    <th>J</th><th>V</th><th>E</th><th>D</th>
+                    <th>GP</th><th>GC</th><th>SG</th>
+                    <th>Pts</th>
+                    <th>Últimos</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr class="q">
+                    <td class="pos">1</td>
+                    <td class="club"><span class="flag">🇧🇷</span>Brasil</td>
+                    <td>2</td><td>1</td><td>1</td><td>0</td>
+                    <td>3</td><td>1</td><td class="gd"><span class="up">+2</span></td>
+                    <td class="pts">4</td>
+                    <td><span class="form"><span class="fc w">V</span><span class="fc d">E</span></span></td>
+                  </tr>
+                  <tr class="q">
+                    <td class="pos">2</td>
+                    <td class="club"><span class="flag">🇯🇵</span>Japão</td>
+                    <td>2</td><td>1</td><td>1</td><td>0</td>
+                    <td>3</td><td>2</td><td class="gd"><span class="up">+1</span></td>
+                    <td class="pts">4</td>
+                    <td><span class="form"><span class="fc d">E</span><span class="fc w">V</span></span></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="qline"><span class="txt">Zona de classificação — Quartas</span><span class="ln"></span></div>
+            <div class="table-wrap">
+              <table class="stand">
+                <tbody>
+                  <tr>
+                    <td class="pos">3</td>
+                    <td class="club"><span class="flag">🇭🇷</span>Croácia</td>
+                    <td>2</td><td>0</td><td>2</td><td>0</td>
+                    <td>2</td><td>2</td><td class="gd">0</td>
+                    <td class="pts">2</td>
+                    <td><span class="form"><span class="fc d">E</span><span class="fc d">E</span></span></td>
+                  </tr>
+                  <tr>
+                    <td class="pos">4</td>
+                    <td class="club"><span class="flag">🇲🇦</span>Marrocos</td>
+                    <td>2</td><td>0</td><td>0</td><td>2</td>
+                    <td>1</td><td>4</td><td class="gd"><span class="dn">−3</span></td>
+                    <td class="pts">0</td>
+                    <td><span class="form"><span class="fc l">D</span><span class="fc l">D</span></span></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div class="tiebreak">
+              <span class="di">◆</span>
+              <div><b>Brasil</b> e <b>Japão</b> empatados em <span class="mono">4 pts</span>. Brasil lidera pelo <b>saldo de gols</b> — <span class="mono">+2 × +1</span>. O confronto direto ainda não aconteceu e decide a ponta na próxima rodada.</div>
+            </div>
+          </div>
+
+          <div class="ov-right">
+            <div class="card live-card">
+              <div class="card-top">
+                <span class="card-kick">Grupo C · em campo</span>
+                <span class="live"><span class="dot"></span>AO VIVO</span>
+              </div>
+              <div class="fixture">
+                <div class="fx-team"><span class="flag">🇦🇷</span>Argentina</div>
+                <div class="fx-score">1 – 1<span class="min">78'</span></div>
+                <div class="fx-team away"><span class="flag">🇫🇷</span>França</div>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-top"><span class="card-kick">Próximo · decide a liderança</span></div>
+              <div class="next-row">
+                <div class="fx-team"><span class="flag">🇧🇷</span>Brasil</div>
+                <div class="next-vs">×</div>
+                <div class="fx-team away"><span class="flag">🇯🇵</span>Japão</div>
+              </div>
+              <div class="decider">Dom · 16:00 — quem vencer termina em <b>1º</b>; empate mantém o Brasil à frente pelo saldo.</div>
+            </div>
+
+            <div class="stat-row">
+              <div class="stat"><div class="n">18</div><div class="l">Jogos disputados</div></div>
+              <div class="stat"><div class="n">2.4</div><div class="l">Gols por jogo</div></div>
+              <div class="stat"><div class="n">6</div><div class="l">Grupos ativos</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= SCREEN 2 — BRACKET ================= -->
+  <section class="screen">
+    <div class="screen-cap">
+      <span class="cap-no">02</span>
+      <span class="cap-title">Chaveamento eliminatório</span>
+      <span class="cap-note">— avanço automático, jogo ao vivo, decisão por pênaltis e vaga do campeão</span>
+    </div>
+
+    <div class="app">
+      <nav class="rail" aria-label="Navegação">
+        <div class="mark">B</div>
+        <div class="rail-btn" title="Visão geral"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg></div>
+        <div class="rail-btn" title="Grupos"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></div>
+        <div class="rail-btn on" title="Chaveamento"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5h6v14H4M10 12h5M15 5h5M15 19h5"/></svg></div>
+        <div class="rail-btn" title="Console"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="8" x2="20" y2="8"/><circle cx="9" cy="8" r="2.4" fill="var(--surface)"/><line x1="4" y1="16" x2="20" y2="16"/><circle cx="15" cy="16" r="2.4" fill="var(--surface)"/></svg></div>
+        <div class="rail-spacer"></div>
+      </nav>
+
+      <div class="main">
+        <div class="topbar">
+          <div class="tb-id">
+            <div class="tb-name"><span class="trophy">🏆</span> Copa Atlas 2026</div>
+            <div class="tb-phase">Mata-mata · Quartas de final</div>
+          </div>
+          <div class="tb-spacer"></div>
+          <div class="phase-pills">
+            <span class="pp done">Grupos</span>
+            <span class="pp now">Quartas</span>
+            <span class="pp">Semis</span>
+            <span class="pp">Final</span>
+          </div>
+        </div>
+
+        <div class="bracket-body">
+          <div class="bracket-scroll">
+            <div class="bracket">
+              <div class="round">
+                <div class="round-hd">Quartas</div>
+                <div class="mtch">
+                  <div class="side win"><span class="flag">🇧🇷</span><span class="nm">Brasil</span><span class="sc">3</span></div>
+                  <div class="side out"><span class="flag">🇵🇹</span><span class="nm">Portugal</span><span class="sc">1</span></div>
+                </div>
+                <div class="mtch livem">
+                  <span class="mtch-tag lv">● ao vivo 78'</span>
+                  <div class="side"><span class="flag">🇦🇷</span><span class="nm">Argentina</span><span class="sc">1</span></div>
+                  <div class="side"><span class="flag">🇫🇷</span><span class="nm">França</span><span class="sc">1</span></div>
+                </div>
+                <div class="mtch">
+                  <div class="side win"><span class="flag">🇪🇸</span><span class="nm">Espanha</span><span class="sc">2</span><span class="pen">(4)</span></div>
+                  <div class="side out"><span class="flag">🇳🇱</span><span class="nm">Países Baixos</span><span class="sc">2</span><span class="pen">(3)</span></div>
+                </div>
+                <div class="mtch">
+                  <span class="mtch-tag">Sáb 21:00</span>
+                  <div class="side"><span class="flag">🇮🇹</span><span class="nm">Itália</span><span class="sc">–</span></div>
+                  <div class="side"><span class="flag">🇩🇪</span><span class="nm">Alemanha</span><span class="sc">–</span></div>
+                </div>
+              </div>
+
+              <div class="round">
+                <div class="round-hd">Semifinais</div>
+                <div class="mtch">
+                  <div class="side win"><span class="flag">🇧🇷</span><span class="nm">Brasil</span><span class="sc">–</span></div>
+                  <div class="side tbd"><span class="flag">⚑</span><span class="nm">Vencedor QF2</span><span class="sc">–</span></div>
+                </div>
+                <div class="mtch">
+                  <div class="side win"><span class="flag">🇪🇸</span><span class="nm">Espanha</span><span class="sc">–</span></div>
+                  <div class="side tbd"><span class="flag">⚑</span><span class="nm">Vencedor QF4</span><span class="sc">–</span></div>
+                </div>
+              </div>
+
+              <div class="round final-col">
+                <div class="round-hd">Final</div>
+                <div class="mtch">
+                  <div class="side tbd"><span class="flag">⚑</span><span class="nm">Vencedor SF1</span><span class="sc">–</span></div>
+                  <div class="side tbd"><span class="flag">⚑</span><span class="nm">Vencedor SF2</span><span class="sc">–</span></div>
+                </div>
+                <div class="champ" style="margin-top:16px">
+                  <div class="cup">🏆</div>
+                  <div class="cl">Campeão</div>
+                  <div class="cw">a definir</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= SCREEN 3 — CONSOLE ================= -->
+  <section class="screen">
+    <div class="screen-cap">
+      <span class="cap-no">03</span>
+      <span class="cap-title">Console da partida</span>
+      <span class="cap-note">— editar um resultado e ver a consequência recalcular antes de confirmar</span>
+    </div>
+
+    <div class="app">
+      <nav class="rail" aria-label="Navegação">
+        <div class="mark">B</div>
+        <div class="rail-btn" title="Visão geral"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg></div>
+        <div class="rail-btn" title="Grupos"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></div>
+        <div class="rail-btn" title="Chaveamento"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5h6v14H4M10 12h5M15 5h5M15 19h5"/></svg></div>
+        <div class="rail-btn on" title="Console"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="8" x2="20" y2="8"/><circle cx="9" cy="8" r="2.4" fill="var(--surface)"/><line x1="4" y1="16" x2="20" y2="16"/><circle cx="15" cy="16" r="2.4" fill="var(--surface)"/></svg></div>
+        <div class="rail-spacer"></div>
+      </nav>
+
+      <div class="main">
+        <div class="topbar">
+          <div class="tb-id">
+            <div class="tb-name"><span class="trophy">🏆</span> Copa Atlas 2026</div>
+            <div class="tb-phase">Console · Grupo A · Rodada 2</div>
+          </div>
+          <div class="tb-spacer"></div>
+          <span class="pp" style="color:var(--ink-dim)">Editando resultado</span>
+        </div>
+
+        <div class="console-body">
+          <div class="con-left">
+            <p class="block-label">Registrar resultado</p>
+            <div class="con-match">
+              <div class="con-team">
+                <span class="flag">🇧🇷</span><span class="nm">Brasil</span>
+                <div class="stepper">
+                  <button aria-label="Menos">−</button>
+                  <span class="val">2</span>
+                  <button aria-label="Mais">+</button>
+                </div>
+              </div>
+              <div class="con-x">×</div>
+              <div class="con-team">
+                <span class="flag">🇭🇷</span><span class="nm">Croácia</span>
+                <div class="stepper">
+                  <button aria-label="Menos">−</button>
+                  <span class="val">1</span>
+                  <button aria-label="Mais">+</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="field">
+              <label>Situação</label>
+              <div class="seg">
+                <button>1º tempo</button>
+                <button>Intervalo</button>
+                <button class="sel">Encerrado</button>
+              </div>
+            </div>
+
+            <button class="btn-primary">Confirmar resultado</button>
+            <p class="btn-note">era 1 – 1 · alterado para 2 – 1</p>
+
+            <div class="tx-note">
+              <span>⛓</span>
+              <div>Recálculo <b style="color:var(--ink-dim)">atômico</b>: a classificação, os critérios de desempate e as vagas do mata-mata são reescritos numa única transação — <code>a tabela nunca fica num estado parcial</code>.</div>
+            </div>
+          </div>
+
+          <div class="con-right">
+            <p class="preview-hd">◆ Consequência da edição</p>
+            <p class="preview-sub">O Grupo A é reordenado ao confirmar. Prévia antes de gravar:</p>
+
+            <div class="delta">
+              <div class="delta-row rise">
+                <span class="p">1</span>
+                <span class="t"><span class="flag">🇧🇷</span>Brasil</span>
+                <span class="move upr">▲ SG +2→+3</span>
+                <span class="ptsv">6</span>
+              </div>
+              <div class="delta-row fall">
+                <span class="p">2</span>
+                <span class="t"><span class="flag">🇯🇵</span>Japão</span>
+                <span class="move dnr">▼ 1º → 2º</span>
+                <span class="ptsv">4</span>
+              </div>
+              <div class="delta-row fall">
+                <span class="p">4</span>
+                <span class="t"><span class="flag">🇭🇷</span>Croácia</span>
+                <span class="move dnr">▼ 3º → 4º</span>
+                <span class="ptsv">2</span>
+              </div>
+              <div class="delta-row rise">
+                <span class="p">3</span>
+                <span class="t"><span class="flag">🇲🇦</span>Marrocos</span>
+                <span class="move upr">▲ 4º → 3º</span>
+                <span class="ptsv">3</span>
+              </div>
+            </div>
+
+            <div class="audit">
+              <div class="audit-hd">Histórico de auditoria</div>
+              <div class="audit-item"><span class="tm">12:04</span><span class="dt"></span><span>Prévia gerada — <b style="color:var(--ink)">Brasil 2 – 1 Croácia</b> · classificação recalculada</span></div>
+              <div class="audit-item mut"><span class="tm">11:47</span><span class="dt"></span><span>Resultado original lançado — Brasil 1 – 1 Croácia</span></div>
+              <div class="audit-item mut"><span class="tm">10:12</span><span class="dt"></span><span>Japão 2 – 1 Marrocos confirmado</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <p class="deck-foot">
+    <b>Sobre o mock.</b> Dados fictícios; times reais só para dar textura. A tese destas telas é que o valor de engenharia não está na tabela em si, mas em mantê-la <b>sempre coerente</b> — o cenário da tela 03 (editar um resultado já lançado e ver o efeito propagar por desempate e chave, numa transação) é exatamente o que o back precisa garantir sob concorrência.
+  </p>
+</div>
