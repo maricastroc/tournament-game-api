@@ -7,7 +7,6 @@ declare(strict_types=1);
 
 use App\Domain\Tournament\Input\MatchResult;
 use App\Domain\Tournament\Input\TeamRef;
-use App\Domain\Tournament\Standings\Criterion;
 use App\Domain\Tournament\Standings\GroupTable;
 use App\Domain\Tournament\Standings\TiebreakRules;
 
@@ -18,6 +17,7 @@ function teams(array $names): array
     foreach ($names as $id => $name) {
         $out[] = new TeamRef($id, $name);
     }
+
     return $out;
 }
 

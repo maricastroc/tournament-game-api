@@ -25,8 +25,7 @@ final class Standing
         public readonly array $form,
         public readonly int $position = 0,
         public readonly bool $qualified = false,
-    ) {
-    }
+    ) {}
 
     public function goalDifference(): int
     {

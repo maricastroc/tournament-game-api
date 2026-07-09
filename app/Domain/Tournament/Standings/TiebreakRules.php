@@ -11,9 +11,7 @@ namespace App\Domain\Tournament\Standings;
 final class TiebreakRules
 {
     /** @param Criterion[] $criteria */
-    private function __construct(public readonly array $criteria)
-    {
-    }
+    private function __construct(public readonly array $criteria) {}
 
     /**
      * Ordem estilo Copa do Mundo: pontos, saldo geral, gols pró geral,

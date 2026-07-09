@@ -19,11 +19,18 @@ app/Domain/Tournament/
 ├── Input/
 │   ├── MatchResult.php   # DTO: resultado de partida encerrada
 │   └── TeamRef.php       # DTO: referência de time
-└── Standings/
-    ├── Criterion.php     # enum dos critérios de desempate
-    ├── TiebreakRules.php # cadeia ordenada — ::fifa(), ::of(...)
-    ├── Standing.php      # value object imutável (linha da tabela)
-    └── GroupTable.php    # a engine pura de classificação
+├── Standings/
+│   ├── Criterion.php     # enum dos critérios de desempate
+│   ├── TiebreakRules.php # cadeia ordenada — ::fifa(), ::of(...)
+│   ├── Standing.php      # value object imutável (linha da tabela)
+│   └── GroupTable.php    # a engine pura de classificação
+└── Bracket/
+    ├── SlotSource.php      # de onde vem um lado (seed de grupo | vencedor de confronto)
+    ├── Tie.php             # topologia de um confronto do mata-mata
+    ├── TieResult.php       # DTO: placar + pênaltis
+    ├── MatchOutcome.php    # decide o vencedor (tempo normal e pênaltis)
+    ├── ResolvedTie.php     # value object: confronto resolvido (o que a UI consome)
+    └── BracketResolver.php # engine pura do mata-mata (deriva vagas, vencedores, campeão)
 ```
 
 **Regra de dependência:** `Laravel → Domain`, nunca o contrário. Nada em `app/Domain` pode
@@ -33,18 +40,23 @@ importar `Illuminate\*` ou `App\Models\*`.
 
 - [x] `GroupTable` — engine pura de classificação, com critérios configuráveis e confronto
       direto recursivo (mini-liga entre os empatados).
-- [x] Testes: 5 cenários nomeados + 1 property test (300 grupos aleatórios, seed fixa).
-- [ ] `BracketResolver` — avanço do mata-mata (inclui pênaltis).
-- [ ] Migrations + models Eloquent (`tournaments`, `stages`, `groups`, `matches`, `ties`).
-- [ ] Action `ConfirmMatchResult` — costura Eloquent ↔ Domain dentro da transação.
-- [ ] Laravel + Sanctum + endpoints da API.
+- [x] `BracketResolver` — engine pura do mata-mata: deriva participantes, decide vencedores
+      (inclui pênaltis), elege o campeão e propaga "a definir" pelas rodadas.
+- [x] Migrations + models Eloquent (`tournaments`, `teams`, `stages`, `groups`, `matches`, `ties`),
+      com índices e a coluna `version` (lock otimista).
+- [x] Action `ConfirmMatchResult` — costura Eloquent ↔ Domain dentro da transação, com lock
+      otimista que rejeita edição concorrente (`StaleResultException` → HTTP 409).
+- [x] Testes: 12 cenários de Domain + 1 property test (300 grupos aleatórios) + 3 feature tests.
+- [ ] `BracketResolver` ligado ao banco (materialização das vagas do mata-mata na transação).
+- [ ] Sanctum (auth httpOnly) + endpoints REST + Resources.
 
 ## Rodando
 
-Antes do Composer, a engine já roda — o runner de fumaça não depende de nada:
+Antes do Composer, as engines já rodam — os runners de fumaça não dependem de nada:
 
 ```bash
-php scripts/smoke.php
+php scripts/smoke.php          # classificação de grupo
+php scripts/smoke-bracket.php  # mata-mata
 ```
 
 Depois de instalar as dependências, a suíte Pest:

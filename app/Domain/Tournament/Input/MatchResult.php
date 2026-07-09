@@ -16,6 +16,5 @@ final class MatchResult
         public readonly int $awayTeamId,
         public readonly int $homeScore,
         public readonly int $awayScore,
-    ) {
-    }
+    ) {}
 }

@@ -17,9 +17,9 @@ use App\Domain\Tournament\Input\TeamRef;
 final class GroupTable
 {
     /**
-     * @param TeamRef[]     $teams
-     * @param MatchResult[] $matches  apenas partidas encerradas
-     * @return Standing[]   ordenado, com position (1..n) e qualified preenchidos
+     * @param  TeamRef[]  $teams
+     * @param  MatchResult[]  $matches  apenas partidas encerradas
+     * @return Standing[] ordenado, com position (1..n) e qualified preenchidos
      */
     public static function compute(array $teams, array $matches, TiebreakRules $rules, int $qualify = 2): array
     {
@@ -38,9 +38,9 @@ final class GroupTable
      * Dobra as partidas em uma linha por time. Reutilizada tanto para o grupo
      * inteiro quanto para as mini-tabelas do confronto direto.
      *
-     * @param TeamRef[]     $teams
-     * @param MatchResult[] $matches
-     * @return array<int, Standing>  indexado por id do time, na ordem de entrada
+     * @param  TeamRef[]  $teams
+     * @param  MatchResult[]  $matches
+     * @return array<int, Standing> indexado por id do time, na ordem de entrada
      */
     private static function accumulate(array $teams, array $matches): array
     {
@@ -56,7 +56,7 @@ final class GroupTable
         foreach ($matches as $match) {
             // Ignora partidas cujos times não estão neste conjunto — essencial para
             // que a mini-tabela do confronto direto veja só os jogos entre os empatados.
-            if (!isset($acc[$match->homeTeamId], $acc[$match->awayTeamId])) {
+            if (! isset($acc[$match->homeTeamId], $acc[$match->awayTeamId])) {
                 continue;
             }
 
@@ -110,9 +110,9 @@ final class GroupTable
      * times empatado, recorre com os critérios restantes — inclusive o confronto
      * direto, que reconstrói uma mini-tabela só com os jogos entre esses times.
      *
-     * @param Standing[]  $standings
-     * @param MatchResult[] $matches
-     * @param Criterion[] $criteria
+     * @param  Standing[]  $standings
+     * @param  MatchResult[]  $matches
+     * @param  Criterion[]  $criteria
      * @return Standing[]
      */
     private static function order(array $standings, array $matches, array $criteria): array
@@ -146,9 +146,9 @@ final class GroupTable
      * os jogos entre eles e reordena por pontos/saldo/gols pró desse recorte.
      * Quem continuar empatado até nessa mini-liga cai para os critérios seguintes.
      *
-     * @param Standing[]  $tied
-     * @param MatchResult[] $matches
-     * @param Criterion[] $rest  critérios após o HeadToHead
+     * @param  Standing[]  $tied
+     * @param  MatchResult[]  $matches
+     * @param  Criterion[]  $rest  critérios após o HeadToHead
      * @return Standing[]
      */
     private static function resolveHeadToHead(array $tied, array $matches, array $rest): array
@@ -178,8 +178,8 @@ final class GroupTable
      * Agrupa em "baldes" ordenados (desc) por um ou mais critérios escalares.
      * Cada balde reúne os times iguais em TODOS os escalares dados.
      *
-     * @param Standing[]  $standings
-     * @param Criterion[] $scalars
+     * @param  Standing[]  $standings
+     * @param  Criterion[]  $scalars
      * @return Standing[][]
      */
     private static function bucketsByScalars(array $standings, array $scalars): array
@@ -219,9 +219,9 @@ final class GroupTable
     }
 
     /**
-     * @param Standing[]    $standings
-     * @param MatchResult[] $matches
-     * @return MatchResult[]  só as partidas em que ambos os times estão no recorte
+     * @param  Standing[]  $standings
+     * @param  MatchResult[]  $matches
+     * @return MatchResult[] só as partidas em que ambos os times estão no recorte
      */
     private static function matchesAmong(array $standings, array $matches): array
     {
