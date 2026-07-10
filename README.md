@@ -1,4 +1,4 @@
-# tournament-game-api
+# Gauntlet
 
 Tournament management API. The engineering value isn't in the screens — it's in keeping the
 **state always coherent**: standings, tiebreak criteria, and bracket advancement that
