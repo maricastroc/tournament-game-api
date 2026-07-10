@@ -12,27 +12,24 @@ uses(RefreshDatabase::class);
 test('the demo seeder populates a browsable end-to-end tournament', function () {
     $this->seed(TournamentDemoSeeder::class);
 
-    // the organizer has known credentials (to test the protected endpoints)
     $this->postJson('/api/login', ['email' => 'demo@bracket.test', 'password' => 'password'])
         ->assertOk()
         ->assertJsonStructure(['token']);
 
-    // group standings (public read)
     $groupA = Group::where('name', 'A')->firstOrFail();
     $this->getJson("/api/groups/{$groupA->id}/standings")
         ->assertOk()
         ->assertJsonCount(4, 'data')
-        ->assertJsonPath('data.0.team.name', 'Brasil')  // 1st on goal difference over Japão
+        ->assertJsonPath('data.0.team.name', 'Brazil')
         ->assertJsonPath('data.0.qualified', true)
-        ->assertJsonPath('data.3.team.name', 'Marrocos');
+        ->assertJsonPath('data.3.team.name', 'Morocco');
 
-    // derived bracket: the semifinal already inherited the quarterfinal winners
     $knockout = Stage::where('type', 'knockout')->firstOrFail();
     $this->getJson("/api/stages/{$knockout->id}/bracket")
         ->assertOk()
         ->assertJsonCount(7, 'data.ties')
-        ->assertJsonPath('data.ties.4.home.name', 'Brasil')   // SF1 = winner of QF1
-        ->assertJsonPath('data.ties.4.away.name', 'Espanha')  // SF1 = winner of QF2 (on penalties)
+        ->assertJsonPath('data.ties.4.home.name', 'Brazil')
+        ->assertJsonPath('data.ties.4.away.name', 'Spain')
         ->assertJsonPath('data.ties.4.status', 'ready')
         ->assertJsonPath('data.champion', null);
 });

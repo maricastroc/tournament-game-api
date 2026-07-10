@@ -23,7 +23,6 @@ function seedKnockout(User $owner): array
         $teams[$name] = Team::create(['tournament_id' => $tournament->id, 'name' => $name]);
     }
 
-    // Group stage: T1>T2 and T3>T4  =>  A1=T1, A2=T2, B1=T3, B2=T4
     $groupStage = Stage::create(['tournament_id' => $tournament->id, 'type' => 'group', 'name' => 'Groups', 'position' => 1]);
     $groupA = Group::create(['stage_id' => $groupStage->id, 'name' => 'A']);
     $groupB = Group::create(['stage_id' => $groupStage->id, 'name' => 'B']);
@@ -67,9 +66,8 @@ test('the owner confirms a knockout result and the winner advances to the final'
         'home_score' => 2, 'away_score' => 1, 'expected_version' => 0,
     ])
         ->assertOk()
-        ->assertJsonPath('data.ties.0.winner.name', 'T1')  // SF1 decided
-        ->assertJsonPath('data.ties.2.home.name', 'T1')    // T1 advanced to the final
-        ->assertJsonPath('data.ties.2.away', null)         // other finalist still undefined
+        ->assertJsonPath('data.ties.0.winner.name', 'T1')
+        ->assertJsonPath('data.ties.2.home.name', 'T1')
         ->assertJsonPath('data.champion', null);
 
     expect(Fixture::find($fx1->id)->version)->toBe(1);

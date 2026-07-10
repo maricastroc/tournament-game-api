@@ -18,19 +18,17 @@ function pairKeys(array $fixtures): array
 test('generates all ties of a single round-robin, each pair once', function () {
     $fixtures = RoundRobinScheduler::schedule([10, 20, 30, 40]);
 
-    // 4 teams => C(4,2) = 6 matches
     expect($fixtures)->toHaveCount(6);
 
     $keys = pairKeys($fixtures);
     expect($keys)->toEqualCanonicalizing(['10-20', '10-30', '10-40', '20-30', '20-40', '30-40']);
-    // no repetition
+
     expect(array_unique($keys))->toHaveCount(6);
 });
 
 test('handles an odd number of teams (bye) without generating a phantom match', function () {
     $fixtures = RoundRobinScheduler::schedule([1, 2, 3]);
 
-    // 3 teams => 3 matches; no invalid id (the bye -1 never appears)
     expect($fixtures)->toHaveCount(3);
     expect(pairKeys($fixtures))->toEqualCanonicalizing(['1-2', '1-3', '2-3']);
 
@@ -55,9 +53,8 @@ test('each team plays every other exactly once', function () {
         $appearances[$f['away']]++;
     }
 
-    // each one faces 5 opponents
     foreach ($appearances as $count) {
         expect($count)->toBe(5);
     }
-    expect($fixtures)->toHaveCount(15); // C(6,2)
+    expect($fixtures)->toHaveCount(15);
 });

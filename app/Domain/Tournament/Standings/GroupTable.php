@@ -54,8 +54,6 @@ final class GroupTable
         }
 
         foreach ($matches as $match) {
-            // Skip matches whose teams are not in this set — essential so that
-            // the head-to-head mini-table sees only the games among the tied teams.
             if (! isset($acc[$match->homeTeamId], $acc[$match->awayTeamId])) {
                 continue;
             }
@@ -120,7 +118,7 @@ final class GroupTable
         $list = array_values($standings);
 
         if (count($list) <= 1 || $criteria === []) {
-            return $list; // usort is stable in PHP 8+: full ties keep the input order
+            return $list;
         }
 
         $criterion = $criteria[0];
@@ -159,7 +157,7 @@ final class GroupTable
 
         $original = [];
         foreach ($tied as $standing) {
-            $original[$standing->team->id] = $standing; // preserves the full-group numbers
+            $original[$standing->team->id] = $standing;
         }
 
         $result = [];
@@ -188,7 +186,7 @@ final class GroupTable
 
         usort($list, static function (Standing $x, Standing $y) use ($scalars): int {
             foreach ($scalars as $scalar) {
-                $delta = self::scalar($y, $scalar) <=> self::scalar($x, $scalar); // descending
+                $delta = self::scalar($y, $scalar) <=> self::scalar($x, $scalar);
                 if ($delta !== 0) {
                     return $delta;
                 }
@@ -243,7 +241,7 @@ final class GroupTable
             Criterion::GoalDifference => $s->goalDifference(),
             Criterion::GoalsFor => $s->goalsFor,
             Criterion::Wins => $s->won,
-            Criterion::HeadToHead => 0, // not a scalar; handled in resolveHeadToHead()
+            Criterion::HeadToHead => 0,
         };
     }
 }

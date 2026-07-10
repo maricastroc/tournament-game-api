@@ -32,7 +32,7 @@ final class BracketResolver
         /** @var array<int, true> $resolving */
         $resolving = [];
 
-        $sideTeam = null; // declared beforehand for the mutual recursion with $winnerOf
+        $sideTeam = null;
 
         $winnerOf = function (int $tieId) use (&$winnerOf, &$sideTeam, $tieById, $resultByTie, &$winnerCache, &$resolving): ?TeamRef {
             if (array_key_exists($tieId, $winnerCache)) {
@@ -72,7 +72,6 @@ final class BracketResolver
                 : $winnerOf($source->tieId);
         };
 
-        // resolved view of each tie
         $resolved = [];
         foreach ($ties as $tie) {
             $home = $sideTeam($tie->home);
@@ -97,7 +96,6 @@ final class BracketResolver
 
         usort($resolved, static fn (ResolvedTie $a, ResolvedTie $b) => [$a->round, $a->id] <=> [$b->round, $b->id]);
 
-        // the final is the tie that nobody consumes (root of the tree); highest round as tiebreaker
         $consumed = [];
         foreach ($ties as $tie) {
             foreach ([$tie->home, $tie->away] as $source) {

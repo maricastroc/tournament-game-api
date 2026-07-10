@@ -53,13 +53,13 @@ test('confirms results and recalculates the group standings', function () {
     ['fixtures' => $f] = seedGroupA();
     $action = new ConfirmMatchResult;
 
-    $action->handle($f[1], 2, 0, 0); // Brasil 2-0 Marrocos
-    $action->handle($f[2], 1, 1, 0); // Croácia 1-1 Japão
-    $action->handle($f[3], 1, 1, 0); // Brasil 1-1 Croácia
-    $table = $action->handle($f[4], 2, 1, 0); // Japão 2-1 Marrocos
+    $action->handle($f[1], 2, 0, 0);
+    $action->handle($f[2], 1, 1, 0);
+    $action->handle($f[3], 1, 1, 0);
+    $table = $action->handle($f[4], 2, 1, 0);
 
     $names = array_map(fn ($s) => $s->team->name, $table);
-    expect($names)->toBe(['Brasil', 'Japão', 'Croácia', 'Marrocos']); // Brasil 1st on goal difference over Japão
+    expect($names)->toBe(['Brasil', 'Japão', 'Croácia', 'Marrocos']);
 
     expect($table[0])->qualified->toBeTrue()
         ->and($table[1])->qualified->toBeTrue()
@@ -80,13 +80,10 @@ test('rejects a concurrent edit with a stale version', function () {
     ['fixtures' => $f] = seedGroupA();
     $action = new ConfirmMatchResult;
 
-    // First write moves the version from 0 -> 1.
     $action->handle($f[1], 2, 0, 0);
 
-    // A second person still thought the version was 0 -> conflict.
     expect(fn () => $action->handle($f[1], 3, 0, 0))
         ->toThrow(StaleResultException::class);
-
-    // The score from the first write remains intact.
+        
     expect(Fixture::find($f[1]->id)->home_score)->toBe(2);
 });

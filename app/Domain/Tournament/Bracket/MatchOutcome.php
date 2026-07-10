@@ -16,7 +16,6 @@ final class MatchOutcome
             return $awayTeamId;
         }
 
-        // draw in regular time -> penalty shootout
         if ($result->homePenalties !== null && $result->awayPenalties !== null) {
             if ($result->homePenalties > $result->awayPenalties) {
                 return $homeTeamId;

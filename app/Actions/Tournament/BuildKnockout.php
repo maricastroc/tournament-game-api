@@ -77,10 +77,10 @@ final class BuildKnockout
     private static function resolve(string $source, array $idByRef): string
     {
         if (! str_starts_with($source, 'winner:r')) {
-            return $source; // 'seed:A1' — already final
+            return $source;
         }
 
-        $ref = substr($source, strlen('winner:')); // 'r1s2'
+        $ref = substr($source, strlen('winner:'));
         $id = $idByRef[$ref] ?? null;
 
         if ($id === null) {

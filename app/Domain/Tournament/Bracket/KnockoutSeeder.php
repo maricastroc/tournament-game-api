@@ -24,7 +24,6 @@ final class KnockoutSeeder
 
         $ties = self::firstRound($names, $qualifyCount);
 
-        // following rounds: pair winners of adjacent slots until only the final remains
         $round = 2;
         $previousCount = count($ties);
         while ($previousCount > 1) {
@@ -54,7 +53,6 @@ final class KnockoutSeeder
         $slot = 1;
 
         if ($qualifyCount === 1) {
-            // one per group: pair winners of consecutive groups
             foreach (array_chunk($names, 2) as [$x, $y]) {
                 $ties[] = self::tie(1, $slot++, "seed:{$x}1", "seed:{$y}1");
             }
@@ -62,7 +60,6 @@ final class KnockoutSeeder
             return $ties;
         }
 
-        // two per group: mirrored cross-matching per pair of groups
         $pairs = array_chunk($names, 2);
         foreach ($pairs as [$x, $y]) {
             $ties[] = self::tie(1, $slot++, "seed:{$x}1", "seed:{$y}2");

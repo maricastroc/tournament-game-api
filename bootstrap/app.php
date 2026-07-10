@@ -23,13 +23,11 @@ return Application::configure(basePath: dirname(__DIR__))
             fn (Request $request) => $request->is('api/*'),
         );
 
-        // Version conflict (optimistic lock) => 409, so the client reloads and resubmits.
         $exceptions->render(fn (StaleResultException $e) => new JsonResponse([
             'message' => $e->getMessage(),
             'expected_version' => $e->expectedVersion,
         ], 409));
 
-        // Incoherent tournament assembly => 422 (invalid business data).
         $exceptions->render(fn (InvalidTournamentStructure $e) => new JsonResponse([
             'message' => $e->getMessage(),
         ], 422));

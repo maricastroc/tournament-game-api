@@ -36,7 +36,6 @@ function byId(array $resolved): array
     return $out;
 }
 
-// Topologia: 4 quartas -> 2 semis -> 1 final
 $ties = [
     new Tie(1, 1, SlotSource::seed('A1'), SlotSource::seed('B2')),
     new Tie(2, 1, SlotSource::seed('C1'), SlotSource::seed('D2')),
@@ -59,16 +58,15 @@ $seeds = [
 ];
 
 $full = [
-    new TieResult(1, 3, 1),            // Brasil 3-1 França
-    new TieResult(2, 2, 2, 4, 3),      // Espanha 2-2 Portugal (pên. 4-3)
-    new TieResult(3, 1, 0),            // Argentina 1-0 Japão
-    new TieResult(4, 0, 2),            // Itália 0-2 Alemanha
-    new TieResult(5, 2, 1),            // Brasil 2-1 Espanha
-    new TieResult(6, 1, 1, 5, 4),      // Argentina 1-1 Alemanha (pên. 5-4)
-    new TieResult(7, 1, 0),            // Brasil 1-0 Argentina
+    new TieResult(1, 3, 1),
+    new TieResult(2, 2, 2, 4, 3),
+    new TieResult(3, 1, 0),
+    new TieResult(4, 0, 2), 
+    new TieResult(5, 2, 1),
+    new TieResult(6, 1, 1, 5, 4),
+    new TieResult(7, 1, 0),
 ];
 
-// ---------------------------------------------------------------------------
 echo "\nCENÁRIO 1 — Torneio completo: derivação e campeão\n";
 $r = BracketResolver::resolve($ties, $full, $seeds);
 $t = byId($r);
@@ -83,7 +81,6 @@ check('Final: Brasil × Argentina', $t[7]->home?->name === 'Brasil' && $t[7]->aw
 check('Campeão = Brasil', $r['champion']?->name === 'Brasil');
 check('Todos os 7 confrontos decididos', count(array_filter($r['ties'], fn ($x) => $x->status === 'decided')) === 7);
 
-// ---------------------------------------------------------------------------
 echo "\nCENÁRIO 2 — Propagação de 'a definir' (semifinal 2 sem resultado)\n";
 $partial = array_values(array_filter($full, fn (TieResult $x) => $x->tieId !== 6 && $x->tieId !== 7));
 $r = BracketResolver::resolve($ties, $partial, $seeds);
@@ -95,11 +92,10 @@ check('Final com um lado a definir => status pending',
     $t[7]->status === 'pending' && $t[7]->home?->name === 'Brasil' && $t[7]->away === null);
 check('Sem campeão enquanto a final não é decidida', $r['champion'] === null);
 
-// ---------------------------------------------------------------------------
 echo "\nCENÁRIO 3 — Ripple: editar uma quarta muda o semifinalista\n";
-// Reverte a quarta 1: França vence no lugar do Brasil. A semi 1 deve trocar de participante.
+
 $edited = $full;
-$edited[0] = new TieResult(1, 1, 3); // França 3-1 Brasil
+$edited[0] = new TieResult(1, 1, 3);
 $r = BracketResolver::resolve($ties, $edited, $seeds);
 $t = byId($r);
 
@@ -109,15 +105,13 @@ check('Resultado 2-1 da semi agora define França como vencedora (mando mantido)
     $t[5]->winner?->name === 'França');
 check('Campeão recomputado a partir da nova árvore', $r['champion']?->name === 'França');
 
-// ---------------------------------------------------------------------------
 echo "\nCENÁRIO 4 — Seed ausente => vaga a definir\n";
 $missing = $seeds;
-unset($missing['B2']); // França não semeada
+unset($missing['B2']);
 $r = BracketResolver::resolve($ties, [], $missing);
 $t = byId($r);
 check('Quarta 1 fica pending com away a definir', $t[1]->status === 'pending' && $t[1]->away === null);
 
-// ---------------------------------------------------------------------------
 echo "\nCENÁRIO 5 — Guarda contra chaveamento cíclico\n";
 $cyclic = [
     new Tie(1, 1, SlotSource::winnerOf(2), SlotSource::seed('A1')),
@@ -131,7 +125,6 @@ try {
 }
 check('Ciclo lança RuntimeException em vez de loop infinito', $threw);
 
-// ---------------------------------------------------------------------------
 echo "\n" . str_repeat('─', 52) . "\n";
 echo $fail === 0
     ? "\033[32mTODOS OS {$pass} CHECKS PASSARAM\033[0m\n"

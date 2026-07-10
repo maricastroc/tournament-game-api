@@ -31,7 +31,7 @@ final class TournamentDemoSeeder extends Seeder
      * @var array<string, array{int, int}>
      */
     private const GROUP_SCORES = [
-        '0-1' => [1, 1], // the two best teams draw
+        '0-1' => [1, 1],
         '0-2' => [2, 0],
         '0-3' => [3, 0],
         '1-2' => [2, 1],
@@ -42,7 +42,6 @@ final class TournamentDemoSeeder extends Seeder
     public function run(): void
     {
         DB::transaction(function () {
-            // idempotency: drop the previous demo (cascade handles teams/stages/matches/brackets)
             Tournament::where('name', 'Atlas Cup 2026')->get()->each->delete();
 
             $owner = User::updateOrCreate(
@@ -117,18 +116,16 @@ final class TournamentDemoSeeder extends Seeder
             'away_source' => $away,
         ]);
 
-        // Quarterfinals (crossing the groups), semis and final
-        $qf1 = $tie(1, 1, 'seed:A1', 'seed:B2'); // Brazil × France
-        $qf2 = $tie(1, 2, 'seed:C1', 'seed:D2'); // Spain × Netherlands
-        $qf3 = $tie(1, 3, 'seed:B1', 'seed:A2'); // Argentina × Japan
-        $qf4 = $tie(1, 4, 'seed:D1', 'seed:C2'); // Portugal × Germany
+        $qf1 = $tie(1, 1, 'seed:A1', 'seed:B2');
+        $qf2 = $tie(1, 2, 'seed:C1', 'seed:D2');
+        $qf3 = $tie(1, 3, 'seed:B1', 'seed:A2');
+        $qf4 = $tie(1, 4, 'seed:D1', 'seed:C2');
         $sf1 = $tie(2, 1, "winner:{$qf1->id}", "winner:{$qf2->id}");
         $sf2 = $tie(2, 2, "winner:{$qf3->id}", "winner:{$qf4->id}");
         $final = $tie(3, 1, "winner:{$sf1->id}", "winner:{$sf2->id}");
 
-        // Two quarterfinals already decided (one on penalties); the rest scheduled.
-        $this->knockoutFixture($tournament, $stage, $qf1, 2, 1);          // Brazil wins
-        $this->knockoutFixture($tournament, $stage, $qf2, 1, 1, 4, 2);    // Spain on penalties
+        $this->knockoutFixture($tournament, $stage, $qf1, 2, 1);
+        $this->knockoutFixture($tournament, $stage, $qf2, 1, 1, 4, 2);
         foreach ([$qf3, $qf4, $sf1, $sf2, $final] as $pending) {
             $this->knockoutFixture($tournament, $stage, $pending);
         }

@@ -11,7 +11,7 @@ return new class extends Migration
         Schema::create('groups', function (Blueprint $table) {
             $table->id();
             $table->foreignId('stage_id')->constrained()->cascadeOnDelete();
-            $table->string('name'); // A, B, C...
+            $table->string('name');
             $table->unsignedInteger('qualify_count')->default(2);
             $table->timestamps();
         });

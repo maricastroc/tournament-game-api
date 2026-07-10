@@ -11,7 +11,7 @@ return new class extends Migration
         Schema::create('stages', function (Blueprint $table) {
             $table->id();
             $table->foreignId('tournament_id')->constrained()->cascadeOnDelete();
-            $table->string('type'); // group | knockout
+            $table->string('type');
             $table->string('name');
             $table->unsignedInteger('position')->default(0);
             $table->timestamps();

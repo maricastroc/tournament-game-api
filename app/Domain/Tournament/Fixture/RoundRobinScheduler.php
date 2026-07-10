@@ -48,7 +48,6 @@ final class RoundRobinScheduler
                 $fixtures[] = ['home' => $home, 'away' => $away];
             }
 
-            // rotate: keep index 0 fixed and rotate the rest (move the last to position 1)
             $last = array_pop($teams);
             array_splice($teams, 1, 0, [$last]);
         }

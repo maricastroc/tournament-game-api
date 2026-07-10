@@ -91,7 +91,7 @@ test('submitting a result requires authentication', function () {
 
 test('a non-owner of the tournament cannot submit a result', function () {
     ['fixtures' => $f] = seedOwnedTournament(User::factory()->create());
-    Sanctum::actingAs(User::factory()->create()); // another user
+    Sanctum::actingAs(User::factory()->create());
 
     $this->putJson("/api/matches/{$f[1]->id}/result", [
         'home_score' => 2, 'away_score' => 0, 'expected_version' => 0,
@@ -128,7 +128,6 @@ test('a concurrent edit with a stale version returns 409', function () {
     $payload = ['home_score' => 2, 'away_score' => 0, 'expected_version' => 0];
     $this->putJson("/api/matches/{$f[1]->id}/result", $payload)->assertOk();
 
-    // The second request still thought the version was 0.
     $this->putJson("/api/matches/{$f[1]->id}/result", $payload)
         ->assertStatus(409)
         ->assertJsonPath('expected_version', 0);

@@ -2,10 +2,6 @@
 
 declare(strict_types=1);
 
-// Runner de fumaça — PHP puro, sem framework, sem autoloader.
-// Prova que a engine roda e satisfaz as invariantes ANTES de o Composer/Pest estarem instalados.
-// Uso:  php scripts/smoke.php   (a partir da raiz do projeto)
-
 use App\Domain\Tournament\Input\MatchResult;
 use App\Domain\Tournament\Input\TeamRef;
 use App\Domain\Tournament\Standings\GroupTable;
@@ -40,14 +36,13 @@ function positions(array $table): array
 
 $fifa = TiebreakRules::fifa();
 
-// ---------------------------------------------------------------------------
 echo "\nCENÁRIO 1 — Grupo A do mock (conservação + ordenação básica)\n";
 $teams = [new TeamRef(1, 'Brasil'), new TeamRef(2, 'Croácia'), new TeamRef(3, 'Marrocos'), new TeamRef(4, 'Japão')];
 $matches = [
-    new MatchResult(1, 3, 2, 0), // Brasil 2-0 Marrocos
-    new MatchResult(2, 4, 1, 1), // Croácia 1-1 Japão
-    new MatchResult(1, 2, 1, 1), // Brasil 1-1 Croácia
-    new MatchResult(4, 3, 2, 1), // Japão 2-1 Marrocos
+    new MatchResult(1, 3, 2, 0),
+    new MatchResult(2, 4, 1, 1),
+    new MatchResult(1, 2, 1, 1),
+    new MatchResult(4, 3, 2, 1),
 ];
 $table = GroupTable::compute($teams, $matches, $fifa);
 $pos = positions($table);
@@ -69,48 +64,42 @@ $sumGf = array_sum(array_map(fn ($s) => $s->goalsFor, $table));
 $sumGa = array_sum(array_map(fn ($s) => $s->goalsAgainst, $table));
 check('Conservação de gols (Σ GP = Σ GC)', $sumGf === $sumGa);
 
-// ---------------------------------------------------------------------------
 echo "\nCENÁRIO 2 — Empate em pontos resolvido pelo SALDO\n";
 $teams = [new TeamRef(1, 'A'), new TeamRef(2, 'B'), new TeamRef(3, 'C')];
 $matches = [
-    new MatchResult(1, 3, 3, 0), // A 3-0 C
-    new MatchResult(2, 3, 1, 0), // B 1-0 C
-    new MatchResult(1, 2, 0, 0), // A 0-0 B  -> A e B em 4 pts; saldo A +3 > B +1
+    new MatchResult(1, 3, 3, 0),
+    new MatchResult(2, 3, 1, 0),
+    new MatchResult(1, 2, 0, 0),
 ];
 $pos = positions(GroupTable::compute($teams, $matches, $fifa));
 check('A à frente de B por saldo de gols', $pos[1] === 1 && $pos[2] === 2);
 
-// ---------------------------------------------------------------------------
 echo "\nCENÁRIO 3 — Empate em pontos e saldo resolvido por GOLS PRÓ\n";
 $teams = [new TeamRef(1, 'A'), new TeamRef(2, 'B'), new TeamRef(3, 'C')];
 $matches = [
-    new MatchResult(1, 3, 2, 1), // A 2-1 C
-    new MatchResult(2, 3, 1, 0), // B 1-0 C
-    new MatchResult(1, 2, 1, 1), // A 1-1 B -> A e B: 4 pts, saldo +1; A fez 3 gols, B fez 2
+    new MatchResult(1, 3, 2, 1),
+    new MatchResult(2, 3, 1, 0),
+    new MatchResult(1, 2, 1, 1),
 ];
 $pos = positions(GroupTable::compute($teams, $matches, $fifa));
 check('A à frente de B por gols pró', $pos[1] === 1 && $pos[2] === 2);
 
-// ---------------------------------------------------------------------------
 echo "\nCENÁRIO 4 — Empate total resolvido pelo CONFRONTO DIRETO\n";
-// Entrada propositalmente na ordem [B, A, C] — se o confronto direto NÃO agisse,
-// A e B ficariam na ordem de entrada (B antes de A). A venceu A×B, então deve subir.
 $teams = [new TeamRef(2, 'B'), new TeamRef(1, 'A'), new TeamRef(3, 'C')];
 $matches = [
-    new MatchResult(1, 2, 2, 1), // A 2-1 B  (confronto direto: A vence)
-    new MatchResult(1, 3, 0, 1), // A 0-1 C
-    new MatchResult(2, 3, 1, 0), // B 1-0 C
+    new MatchResult(1, 2, 2, 1),
+    new MatchResult(1, 3, 0, 1),
+    new MatchResult(2, 3, 1, 0),
 ];
 $pos = positions(GroupTable::compute($teams, $matches, $fifa));
 check('A subiu sobre B pelo confronto direto (contra a ordem de entrada)', $pos[1] === 1 && $pos[2] === 2);
 check('C em 3º (menos gols pró)', $pos[3] === 3);
 
-// ---------------------------------------------------------------------------
 echo "\nCENÁRIO 5 — Ciclo A>B>C>A: empate irredutível => ordem determinística de entrada\n";
 $matches = [
-    new MatchResult(1, 2, 1, 0), // A 1-0 B
-    new MatchResult(2, 3, 1, 0), // B 1-0 C
-    new MatchResult(3, 1, 1, 0), // C 1-0 A
+    new MatchResult(1, 2, 1, 0),
+    new MatchResult(2, 3, 1, 0),
+    new MatchResult(3, 1, 1, 0),
 ];
 $in1 = [new TeamRef(1, 'A'), new TeamRef(2, 'B'), new TeamRef(3, 'C')];
 $in2 = [new TeamRef(3, 'C'), new TeamRef(2, 'B'), new TeamRef(1, 'A')];
@@ -120,11 +109,10 @@ check('Ordem [A,B,C] preservada quando entra [A,B,C]', $order1 === [1, 2, 3]);
 check('Ordem [C,B,A] preservada quando entra [C,B,A]', $order2 === [3, 2, 1]);
 check('Determinismo: recomputar dá o mesmo resultado', $order1 === array_map(fn ($s) => $s->team->id, GroupTable::compute($in1, $matches, $fifa)));
 
-// ---------------------------------------------------------------------------
 echo "\nCENÁRIO 6 — Monotonicidade: melhorar um resultado nunca rebaixa o time\n";
 $teams = [new TeamRef(1, 'A'), new TeamRef(2, 'B')];
-$before = GroupTable::compute($teams, [new MatchResult(1, 2, 0, 0)], $fifa); // empate
-$after = GroupTable::compute($teams, [new MatchResult(1, 2, 1, 0)], $fifa);  // A vence
+$before = GroupTable::compute($teams, [new MatchResult(1, 2, 0, 0)], $fifa);
+$after = GroupTable::compute($teams, [new MatchResult(1, 2, 1, 0)], $fifa);
 $aBeforePos = positions($before)[1];
 $aAfterPos = positions($after)[1];
 $aBeforePts = array_values(array_filter($before, fn ($s) => $s->team->id === 1))[0]->points;
@@ -132,7 +120,6 @@ $aAfterPts = array_values(array_filter($after, fn ($s) => $s->team->id === 1))[0
 check('Pontos de A subiram (1 -> 3)', $aBeforePts === 1 && $aAfterPts === 3);
 check('Posição de A não piorou', $aAfterPos <= $aBeforePos);
 
-// ---------------------------------------------------------------------------
 echo "\n" . str_repeat('─', 52) . "\n";
 echo $fail === 0
     ? "\033[32mTODOS OS {$pass} CHECKS PASSARAM\033[0m\n"

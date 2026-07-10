@@ -41,11 +41,11 @@ function fullResults(): array
 {
     return [
         new TieResult(1, 3, 1),
-        new TieResult(2, 2, 2, 4, 3), // penalties
+        new TieResult(2, 2, 2, 4, 3),
         new TieResult(3, 1, 0),
         new TieResult(4, 0, 2),
         new TieResult(5, 2, 1),
-        new TieResult(6, 1, 1, 5, 4), // penalties
+        new TieResult(6, 1, 1, 5, 4),
         new TieResult(7, 1, 0),
     ];
 }
@@ -91,7 +91,7 @@ test('propagates "TBD" when a source tie has not finished', function () {
 
 test('editing a result recomputes the entire tree (ripple)', function () {
     $edited = fullResults();
-    $edited[0] = new TieResult(1, 1, 3); // França wins quarterfinal 1 instead of Brasil
+    $edited[0] = new TieResult(1, 1, 3);
 
     $result = BracketResolver::resolve(knockoutTies(), $edited, knockoutSeeds());
     $t = tiesById($result);

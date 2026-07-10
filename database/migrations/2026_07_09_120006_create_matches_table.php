@@ -13,7 +13,6 @@ return new class extends Migration
             $table->foreignId('tournament_id')->constrained()->cascadeOnDelete();
             $table->foreignId('stage_id')->constrained()->cascadeOnDelete();
             $table->foreignId('group_id')->nullable()->constrained()->nullOnDelete();
-            // tie_id without FK: circular relationship with `ties` (ties.match_id points back)
             $table->unsignedBigInteger('tie_id')->nullable()->index();
             $table->foreignId('home_team_id')->nullable()->constrained('teams')->nullOnDelete();
             $table->foreignId('away_team_id')->nullable()->constrained('teams')->nullOnDelete();
@@ -21,9 +20,9 @@ return new class extends Migration
             $table->unsignedInteger('away_score')->nullable();
             $table->unsignedInteger('home_penalties')->nullable();
             $table->unsignedInteger('away_penalties')->nullable();
-            $table->string('status')->default('scheduled'); // scheduled | live | finished
+            $table->string('status')->default('scheduled');
             $table->timestamp('kickoff_at')->nullable();
-            $table->unsignedInteger('version')->default(0); // optimistic lock for concurrent editing
+            $table->unsignedInteger('version')->default(0);
             $table->timestamps();
 
             $table->index(['stage_id', 'status']);
