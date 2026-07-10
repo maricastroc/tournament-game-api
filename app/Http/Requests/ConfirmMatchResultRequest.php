@@ -15,6 +15,9 @@ final class ConfirmMatchResultRequest extends FormRequest
             'home_score' => ['required', 'integer', 'min:0', 'max:99'],
             'away_score' => ['required', 'integer', 'min:0', 'max:99'],
             'expected_version' => ['required', 'integer', 'min:0'],
+            // pênaltis: só fazem sentido no mata-mata; opcionais e ignorados nos grupos
+            'home_penalties' => ['nullable', 'integer', 'min:0', 'max:99'],
+            'away_penalties' => ['nullable', 'integer', 'min:0', 'max:99'],
         ];
     }
 
@@ -31,5 +34,19 @@ final class ConfirmMatchResultRequest extends FormRequest
     public function expectedVersion(): int
     {
         return (int) $this->integer('expected_version');
+    }
+
+    public function homePenalties(): ?int
+    {
+        return $this->has('home_penalties') && $this->input('home_penalties') !== null
+            ? (int) $this->integer('home_penalties')
+            : null;
+    }
+
+    public function awayPenalties(): ?int
+    {
+        return $this->has('away_penalties') && $this->input('away_penalties') !== null
+            ? (int) $this->integer('away_penalties')
+            : null;
     }
 }

@@ -46,20 +46,24 @@ importar `Illuminate\*` ou `App\Models\*`.
       com índices e a coluna `version` (lock otimista).
 - [x] Action `ConfirmMatchResult` — costura Eloquent ↔ Domain dentro da transação, com lock
       otimista que rejeita edição concorrente (`StaleResultException` → HTTP 409).
-- [x] API REST com Sanctum: auth por token, classificação pública, lançamento de resultado
-      protegido por dono (Policy), validação (422) e conflito de versão (409).
-- [x] Testes: 12 cenários de Domain + 1 property test (300 grupos aleatórios) + 12 feature tests
-      (Action com banco real + a API ponta a ponta). **25 testes, ~3400 asserções.**
-- [ ] `BracketResolver` ligado ao banco (materialização das vagas do mata-mata na transação).
-- [ ] Endpoints de escrita do mata-mata + leitura do chaveamento.
+- [x] API REST com Sanctum: auth por token, leituras públicas (classificação e chaveamento),
+      lançamento de resultado protegido por dono (Policy), validação (422) e conflito de versão (409).
+- [x] `BracketResolver` ligado ao banco: mata-mata derivado das sementes (projeção dos grupos)
+      + topologia; o mesmo endpoint de resultado atende grupo (→ classificação) e mata-mata (→ chaveamento).
+- [x] Seeder de demo: "Copa Atlas 2026" completa (4 grupos decididos + mata-mata em andamento)
+      num comando, com organizador de credenciais conhecidas — API rica e navegável na hora.
+- [x] Testes: 13 cenários de Domain + property test (300 grupos) + 16 feature tests (banco real +
+      API ponta a ponta, incl. avanço no mata-mata, pênaltis e o seeder). **29 testes, ~3400 asserções.**
+- [ ] Geração automática de chaveamento a partir dos grupos + CRUD de montagem do torneio.
 
 ## API
 
 | Método | Rota | Auth | O quê |
 |--------|------|------|-------|
 | `POST` | `/api/register` · `/api/login` | — | emite token Sanctum |
-| `GET`  | `/api/groups/{group}/standings` | — | classificação (projeção das partidas) |
-| `PUT`  | `/api/matches/{fixture}/result` | dono | lança/edita resultado → classificação recalculada; 409 em conflito de versão |
+| `GET`  | `/api/groups/{group}/standings` | — | classificação do grupo (projeção das partidas) |
+| `GET`  | `/api/stages/{stage}/bracket` | — | chaveamento resolvido + campeão |
+| `PUT`  | `/api/matches/{fixture}/result` | dono | lança/edita resultado → grupo devolve classificação, mata-mata devolve chaveamento; 409 em conflito de versão |
 | `GET`  | `/api/user` · `POST /api/logout` | token | sessão |
 
 ## Rodando
@@ -77,6 +81,17 @@ Depois de instalar as dependências, a suíte Pest:
 composer install
 ./vendor/bin/pest
 ```
+
+### Demo
+
+Um comando popula a "Copa Atlas 2026" inteira (grupos decididos + mata-mata em andamento):
+
+```bash
+php artisan migrate:fresh --seed
+```
+
+Organizador de teste — para os endpoints protegidos: **`demo@bracket.test`** / **`password`**.
+Depois é só navegar: `GET /api/stages/{id}/bracket`, `GET /api/groups/{id}/standings`.
 
 ## Notas
 
