@@ -7,6 +7,7 @@ use App\Http\Controllers\BracketController;
 use App\Http\Controllers\GroupStageController;
 use App\Http\Controllers\KnockoutController;
 use App\Http\Controllers\MatchResultController;
+use App\Http\Controllers\ScenarioController;
 use App\Http\Controllers\StandingsController;
 use App\Http\Controllers\TeamController;
 use App\Http\Controllers\TournamentController;
@@ -18,6 +19,7 @@ Route::post('/login', [AuthController::class, 'login']);
 Route::get('/groups/{group}/standings', [StandingsController::class, 'show']);
 Route::get('/stages/{stage}/bracket', [BracketController::class, 'show']);
 Route::get('/tournaments/{tournament}', [TournamentController::class, 'show']);
+Route::post('/tournaments/{tournament}/scenario', [ScenarioController::class, 'store']);
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user', [AuthController::class, 'me']);

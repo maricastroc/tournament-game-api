@@ -19,8 +19,9 @@ final class ResolveBracket
     public function __construct(private readonly ComputeGroupStandings $standings = new ComputeGroupStandings) {}
 
     /** @return array{ties: ResolvedTie[], champion: ?TeamRef} */
-    public function for(Stage $stage): array
+    public function for(Stage $stage, ?ScenarioOverlay $overlay = null): array
     {
+        $overlay ??= ScenarioOverlay::none();
         $ties = $stage->ties()->orderBy('round')->orderBy('slot')->get();
 
         $topology = $ties->map(fn (Tie $tie) => new TieDto(
@@ -30,22 +31,37 @@ final class ResolveBracket
             self::parseSource($tie->away_source),
         ))->all();
 
-        $results = Fixture::whereIn('tie_id', $ties->modelKeys())
-            ->finished()
-            ->get()
-            ->map(fn (Fixture $fixture) => new TieResult(
-                $fixture->tie_id,
-                $fixture->home_score,
-                $fixture->away_score,
-                $fixture->home_penalties,
-                $fixture->away_penalties,
-            ))->all();
+        $query = Fixture::whereIn('tie_id', $ties->modelKeys());
+        $fixtures = $overlay->isEmpty() ? $query->finished()->get() : $query->get();
 
-        return BracketResolver::resolve($topology, $results, $this->seeds($stage));
+        $results = [];
+        foreach ($fixtures as $fixture) {
+            $hypothetical = $overlay->for($fixture->id);
+
+            if ($hypothetical !== null) {
+                $results[] = new TieResult(
+                    $fixture->tie_id,
+                    $hypothetical->homeScore,
+                    $hypothetical->awayScore,
+                    $hypothetical->homePenalties,
+                    $hypothetical->awayPenalties,
+                );
+            } elseif ($fixture->status === 'finished') {
+                $results[] = new TieResult(
+                    $fixture->tie_id,
+                    $fixture->home_score,
+                    $fixture->away_score,
+                    $fixture->home_penalties,
+                    $fixture->away_penalties,
+                );
+            }
+        }
+
+        return BracketResolver::resolve($topology, $results, $this->seeds($stage, $overlay));
     }
 
     /** @return array<string, TeamRef>  ex.: ['A1' => TeamRef, 'B2' => TeamRef, ...] */
-    private function seeds(Stage $knockout): array
+    private function seeds(Stage $knockout, ScenarioOverlay $overlay): array
     {
         $groupStage = $knockout->tournament
             ->stages()
@@ -59,7 +75,7 @@ final class ResolveBracket
 
         $seeds = [];
         foreach ($groupStage->groups as $group) {
-            foreach ($this->standings->for($group) as $standing) {
+            foreach ($this->standings->for($group, $overlay) as $standing) {
                 $seeds[$group->name.$standing->position] = $standing->team;
             }
         }

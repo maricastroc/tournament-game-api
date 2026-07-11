@@ -5,7 +5,7 @@ Tournament management API. The engineering value isn't in the screens — it's i
 recompute, within a transaction, on every result submitted.
 
 Core principle: **state is a projection, not a datum.** The source of truth is the match
-results; standings, goal difference, who advanced, and the champion are all *derived* by pure
+results; standings, goal difference, who advanced, and the champion are all _derived_ by pure
 functions. Editing a result means recomputing the projection — not syncing mutable state.
 
 ## Architecture
@@ -50,6 +50,9 @@ may import `Illuminate\*` or `App\Models\*`.
       submission protected by owner (Policy), validation (422), and version conflict (409).
 - [x] `BracketResolver` wired to the database: knockout derived from the seeds (projection of the
       groups) + topology; the same result endpoint serves groups (→ standings) and knockout (→ bracket).
+- [x] `ProjectScenario` — the "what if?" projection: a `ScenarioOverlay` layers hypothetical results
+      over the real matches and the _same_ pure engines recompute the whole tournament **without writing
+      anything**; a hypothetical group result cascades into the bracket seeds. A public, unauthenticated read.
 - [x] Demo seeder: the full "Copa Atlas 2026" (4 decided groups + knockout in progress) in a
       single command, with an organizer of known credentials — a rich, browsable API instantly.
 - [x] Tournament assembly (CRUD): create a tournament, add teams, set up the group stage, and
@@ -57,23 +60,24 @@ may import `Illuminate\*` or `App\Models\*`.
       `KnockoutSeeder`, with the A1×B2 crossover and the chained `winner:` refs) + transactional Actions.
       A rich `TournamentDetailResource` (stages → groups → matches with `version`) feeds the front end.
 - [x] Tests: Domain scenarios + property test + feature tests (real database + end-to-end API,
-      incl. knockout advancement, penalties, the seeder, and the full assembly). **51 tests, ~3550 assertions.**
+      incl. knockout advancement, penalties, the seeder, the full assembly, and the what-if scenario). **57 tests, ~3575 assertions.**
 
 ## API
 
-| Method | Route | Auth | What |
-|--------|------|------|------|
-| `POST` | `/api/register` · `/api/login` | — | issues a Sanctum token |
-| `GET`  | `/api/groups/{group}/standings` | — | group standings (projection of the matches) |
-| `GET`  | `/api/stages/{stage}/bracket` | — | resolved bracket + champion |
-| `PUT`  | `/api/matches/{fixture}/result` | owner | submits/edits a result → group returns standings, knockout returns bracket; 409 on version conflict |
-| `GET`  | `/api/tournaments/{tournament}` | — | full view (stages → groups → matches with `version`) — the front-end read model |
-| `GET` · `POST` | `/api/tournaments` | owner | lists mine · creates one (draft) |
-| `DELETE` | `/api/tournaments/{tournament}` | owner | removes (cascade) |
-| `POST` | `/api/tournaments/{tournament}/teams` | owner | adds teams in bulk |
-| `POST` | `/api/tournaments/{tournament}/group-stage` | owner | sets up groups + generates the single round-robin |
-| `POST` | `/api/tournaments/{tournament}/knockout` | owner | generates the bracket from the groups (422 if not complete) |
-| `GET`  | `/api/user` · `POST /api/logout` | token | session |
+| Method         | Route                                       | Auth  | What                                                                                                |
+| -------------- | ------------------------------------------- | ----- | --------------------------------------------------------------------------------------------------- |
+| `POST`         | `/api/register` · `/api/login`              | —     | issues a Sanctum token                                                                              |
+| `GET`          | `/api/groups/{group}/standings`             | —     | group standings (projection of the matches)                                                         |
+| `GET`          | `/api/stages/{stage}/bracket`               | —     | resolved bracket + champion                                                                         |
+| `POST`         | `/api/tournaments/{tournament}/scenario`    | —     | projects hypothetical results (standings + bracket) **without persisting** — the "what if?" engine  |
+| `PUT`          | `/api/matches/{fixture}/result`             | owner | submits/edits a result → group returns standings, knockout returns bracket; 409 on version conflict |
+| `GET`          | `/api/tournaments/{tournament}`             | —     | full view (stages → groups → matches with `version`) — the front-end read model                     |
+| `GET` · `POST` | `/api/tournaments`                          | owner | lists mine · creates one (draft)                                                                    |
+| `DELETE`       | `/api/tournaments/{tournament}`             | owner | removes (cascade)                                                                                   |
+| `POST`         | `/api/tournaments/{tournament}/teams`       | owner | adds teams in bulk                                                                                  |
+| `POST`         | `/api/tournaments/{tournament}/group-stage` | owner | sets up groups + generates the single round-robin                                                   |
+| `POST`         | `/api/tournaments/{tournament}/knockout`    | owner | generates the bracket from the groups (422 if not complete)                                         |
+| `GET`          | `/api/user` · `POST /api/logout`            | token | session                                                                                             |
 
 ## Running
 

@@ -2,6 +2,7 @@
 
 use App\Exceptions\InvalidTournamentStructure;
 use App\Exceptions\StaleResultException;
+use Illuminate\Auth\AuthenticationException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -22,6 +23,11 @@ return Application::configure(basePath: dirname(__DIR__))
         $exceptions->shouldRenderJsonWhen(
             fn (Request $request) => $request->is('api/*'),
         );
+
+        // API clients get a clean 401 instead of a redirect to the (nonexistent) login route.
+        $exceptions->render(fn (AuthenticationException $e, Request $request) => $request->is('api/*')
+            ? new JsonResponse(['message' => $e->getMessage()], 401)
+            : null);
 
         $exceptions->render(fn (StaleResultException $e) => new JsonResponse([
             'message' => $e->getMessage(),

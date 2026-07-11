@@ -15,30 +15,44 @@ use App\Models\Team;
 
 /**
  * The READ boundary: maps a group (Eloquent) to the Domain DTOs and delegates
- * the computation to the pure engine. Reused both by the write path (ConfirmMatchResult)
- * and by the standings read endpoint — the translation lives in a single place.
+ * the computation to the pure engine. Reused by the write path (ConfirmMatchResult),
+ * the standings read endpoint, and the scenario projection (via an optional overlay).
  */
 final class ComputeGroupStandings
 {
     /** @return Standing[] */
-    public function for(Group $group): array
+    public function for(Group $group, ?ScenarioOverlay $overlay = null): array
     {
         $group->loadMissing('teams');
+        $overlay ??= ScenarioOverlay::none();
 
         $teams = $group->teams
             ->map(fn (Team $team) => new TeamRef($team->id, $team->name))
             ->all();
 
-        $results = Fixture::where('group_id', $group->id)
-            ->finished()
-            ->get()
-            ->map(fn (Fixture $fixture) => new MatchResult(
-                $fixture->home_team_id,
-                $fixture->away_team_id,
-                $fixture->home_score,
-                $fixture->away_score,
-            ))
-            ->all();
+        $query = Fixture::where('group_id', $group->id);
+        $fixtures = $overlay->isEmpty() ? $query->finished()->get() : $query->get();
+
+        $results = [];
+        foreach ($fixtures as $fixture) {
+            $hypothetical = $overlay->for($fixture->id);
+
+            if ($hypothetical !== null) {
+                $results[] = new MatchResult(
+                    $fixture->home_team_id,
+                    $fixture->away_team_id,
+                    $hypothetical->homeScore,
+                    $hypothetical->awayScore,
+                );
+            } elseif ($fixture->status === 'finished') {
+                $results[] = new MatchResult(
+                    $fixture->home_team_id,
+                    $fixture->away_team_id,
+                    $fixture->home_score,
+                    $fixture->away_score,
+                );
+            }
+        }
 
         return GroupTable::compute($teams, $results, TiebreakRules::fifa(), $group->qualify_count);
     }
