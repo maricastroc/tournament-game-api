@@ -106,14 +106,10 @@ final class TournamentDemoSeeder extends Seeder
 
     private function buildKnockout(Tournament $tournament): void
     {
-        // Build the full 16-team bracket (Round of 16 → Final) through the same action the app uses,
-        // so the topology and winner resolution match production exactly.
         app(BuildKnockout::class)->handle($tournament);
 
         $stage = $tournament->stages()->where('type', 'knockout')->firstOrFail();
 
-        // Round of 16 half-played: a spread of results (one settled on penalties), the rest still to come.
-        // Winners cascade lazily to the quarterfinals when the bracket is read — no manual wiring needed.
         $this->playKnockout($stage, 1, 1, 3, 1);
         $this->playKnockout($stage, 1, 2, 1, 1, 5, 4);
         $this->playKnockout($stage, 1, 3, 2, 0);

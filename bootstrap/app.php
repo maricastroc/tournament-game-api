@@ -24,7 +24,6 @@ return Application::configure(basePath: dirname(__DIR__))
             fn (Request $request) => $request->is('api/*'),
         );
 
-        // API clients get a clean 401 instead of a redirect to the (nonexistent) login route.
         $exceptions->render(fn (AuthenticationException $e, Request $request) => $request->is('api/*')
             ? new JsonResponse(['message' => $e->getMessage()], 401)
             : null);

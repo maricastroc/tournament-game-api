@@ -73,7 +73,6 @@ test('projects hypothetical group results without persisting anything', function
 test('a hypothetical group result cascades into the bracket seeds', function () {
     ['tournament' => $tournament, 'fixtures' => $f] = seedScenarioTournament();
 
-    // T2 beats T1, so T2 wins group A and takes the A1 seed feeding semifinal 1.
     $this->postJson("/api/tournaments/{$tournament->id}/scenario", [
         'results' => [
             ['fixture_id' => $f['A']->id, 'home_score' => 0, 'away_score' => 3],

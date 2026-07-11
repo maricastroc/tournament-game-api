@@ -12,6 +12,7 @@ use App\Models\Tie;
 use App\Models\Tournament;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Collection;
 
 /**
  * The full view of a tournament — the read model the UI consumes to know the
@@ -27,10 +28,13 @@ final class TournamentDetailResource extends JsonResource
     /** @return array<string, mixed> */
     public function toArray(Request $request): array
     {
+        $user = $request->user('sanctum');
+
         return [
             'id' => $this->resource->id,
             'name' => $this->resource->name,
             'status' => $this->resource->status,
+            'can_manage' => $user !== null && $user->id === $this->resource->user_id,
             'teams' => $this->resource->teams->map(fn (Team $team) => self::team($team))->all(),
             'stages' => $this->resource->stages
                 ->sortBy('position')
@@ -74,7 +78,7 @@ final class TournamentDetailResource extends JsonResource
     }
 
     /**
-     * @param  \Illuminate\Support\Collection<int, Fixture>  $stageFixtures
+     * @param  Collection<int, Fixture>  $stageFixtures
      * @return array<string, mixed>
      */
     private static function group(Group $group, $stageFixtures): array

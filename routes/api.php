@@ -28,8 +28,10 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('/tournaments', [TournamentController::class, 'index']);
     Route::post('/tournaments', [TournamentController::class, 'store']);
+    Route::patch('/tournaments/{tournament}', [TournamentController::class, 'update']);
     Route::delete('/tournaments/{tournament}', [TournamentController::class, 'destroy']);
     Route::post('/tournaments/{tournament}/teams', [TeamController::class, 'store']);
+    Route::patch('/tournaments/{tournament}/teams/{team}', [TeamController::class, 'update']);
     Route::post('/tournaments/{tournament}/group-stage', [GroupStageController::class, 'store']);
     Route::post('/tournaments/{tournament}/knockout', [KnockoutController::class, 'store']);
 });

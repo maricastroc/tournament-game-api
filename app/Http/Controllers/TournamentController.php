@@ -5,13 +5,16 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Actions\Tournament\CreateTournament;
+use App\Actions\Tournament\UpdateTournament;
 use App\Http\Requests\CreateTournamentRequest;
+use App\Http\Requests\UpdateTournamentRequest;
 use App\Http\Resources\TournamentDetailResource;
 use App\Http\Resources\TournamentResource;
 use App\Models\Tournament;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Gate;
 
 final class TournamentController extends Controller
@@ -38,6 +41,19 @@ final class TournamentController extends Controller
             ->setStatusCode(201);
     }
 
+    /** Renames the tournament. Owner only. */
+    public function update(
+        UpdateTournamentRequest $request,
+        Tournament $tournament,
+        UpdateTournament $action,
+    ): TournamentResource {
+        Gate::authorize('manage', $tournament);
+
+        $action->handle($tournament, $request->tournamentName());
+
+        return new TournamentResource($tournament->loadCount(['teams', 'stages']));
+    }
+
     /** The full view of the tournament — structure + matches (with version). Public (fan view). */
     public function show(Tournament $tournament): TournamentDetailResource
     {
@@ -45,7 +61,7 @@ final class TournamentController extends Controller
     }
 
     /** Removes the tournament (cascade handles teams/stages/matches). Owner only. */
-    public function destroy(Tournament $tournament): \Illuminate\Http\Response
+    public function destroy(Tournament $tournament): Response
     {
         Gate::authorize('manage', $tournament);
 
