@@ -64,6 +64,14 @@ may import `Illuminate\*` or `App\Models\*`.
       **generate** the single round-robin and the bracket — via new pure engines (`RoundRobinScheduler`,
       `KnockoutSeeder`, with the A1×B2 crossover and the chained `winner:` refs) + transactional Actions.
       A rich `TournamentDetailResource` (stages → groups → matches with `version`) feeds the front end.
+- [x] Tournament editing: `PATCH /tournaments/{id}` (rename) and `PATCH /tournaments/{id}/teams/{team}`
+      (rename / flag, partial-safe — untouched fields survive) — owner-gated Actions. `TournamentDetailResource`
+      carries `can_manage` (the authoritative policy result for the token-bearing caller) so the UI shows edit
+      controls only to the owner and keeps the demo template read-only. Renames are safe: standings and the
+      bracket are keyed by id, not name.
+- [x] Cross-engine conformance: a shared `tests/Vectors/standings.json` (byte-identical to the front end's
+      copy) that both the PHP `GroupTable` and the TypeScript standings engine must reproduce — so the two
+      implementations can't silently drift on tiebreaks (e.g. head-to-head).
 - [x] Tests: Domain scenarios + property test + feature tests (real database + end-to-end API,
       incl. knockout advancement, penalties, the seeder, the full assembly, the what-if scenario,
       and the demo sandbox clone/isolation/prune). **88 tests, ~3900 assertions.**
@@ -77,10 +85,12 @@ may import `Illuminate\*` or `App\Models\*`.
 | `GET`          | `/api/stages/{stage}/bracket`               | —     | resolved bracket + champion                                                                         |
 | `POST`         | `/api/tournaments/{tournament}/scenario`    | —     | projects hypothetical results (standings + bracket) **without persisting** — the "what if?" engine  |
 | `PUT`          | `/api/matches/{fixture}/result`             | owner | submits/edits a result → group returns standings, knockout returns bracket; 409 on version conflict |
-| `GET`          | `/api/tournaments/{tournament}`             | —     | full view (stages → groups → matches with `version`) — the front-end read model                     |
+| `GET`          | `/api/tournaments/{tournament}`             | —     | full view (stages → groups → matches with `version`); adds `can_manage` for the token-bearing caller |
 | `GET` · `POST` | `/api/tournaments`                          | owner | lists mine · creates one (draft)                                                                    |
+| `PATCH`        | `/api/tournaments/{tournament}`             | owner | renames the tournament                                                                              |
 | `DELETE`       | `/api/tournaments/{tournament}`             | owner | removes (cascade)                                                                                   |
 | `POST`         | `/api/tournaments/{tournament}/teams`       | owner | adds teams in bulk                                                                                  |
+| `PATCH`        | `/api/tournaments/{tournament}/teams/{team}`| owner | renames a team / updates its flag (partial-safe)                                                    |
 | `POST`         | `/api/tournaments/{tournament}/group-stage` | owner | sets up groups + generates the single round-robin                                                   |
 | `POST`         | `/api/tournaments/{tournament}/knockout`    | owner | generates the bracket from the groups (422 if not complete)                                         |
 | `POST`         | `/api/demo/reset`                           | demo  | drops this session's demo sandbox and clones a fresh one from the template                          |
