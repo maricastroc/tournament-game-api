@@ -17,6 +17,19 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | API Docs Access Key
+    |--------------------------------------------------------------------------
+    |
+    | Shared secret that unlocks the Scramble API docs outside of the local
+    | environment. Requests to /docs/api must pass `?key=<DOCS_KEY>`. Leave
+    | null to keep the docs closed everywhere except local.
+    |
+    */
+
+    'docs_key' => env('DOCS_KEY'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Application Environment
     |--------------------------------------------------------------------------
     |

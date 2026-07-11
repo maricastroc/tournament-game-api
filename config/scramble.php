@@ -60,7 +60,7 @@ return [
         'title' => 'Tournament Game API',
     ],
 
-    'renderer' => 'elements',
+    'renderer' => 'scalar',
 
     'renderers' => [
         /*
