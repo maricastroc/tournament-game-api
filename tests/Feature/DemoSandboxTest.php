@@ -30,6 +30,15 @@ function playedGroupFixture(int $tournamentId): Fixture
         ->firstOrFail();
 }
 
+/** A finished knockout fixture (tie_id set) belonging to the given tournament. */
+function playedKnockoutFixture(int $tournamentId): Fixture
+{
+    return Fixture::where('tournament_id', $tournamentId)
+        ->whereNotNull('tie_id')
+        ->where('status', 'finished')
+        ->firstOrFail();
+}
+
 beforeEach(fn () => $this->seed(TournamentDemoSeeder::class));
 
 test('demo login provisions an isolated sandbox scoped to the session token', function () {
@@ -90,6 +99,34 @@ test('a session can edit its own sandbox', function () {
             'expected_version' => $fixture->version,
         ])
         ->assertOk();
+});
+
+test('a session can edit its own sandbox knockout result', function () {
+    $a = demoLogin($this);
+    $fixture = playedKnockoutFixture($a['sandbox']);
+
+    $this->withToken($a['token'])
+        ->putJson("/api/matches/{$fixture->id}/result", [
+            'home_score' => 3,
+            'away_score' => 1,
+            'expected_version' => $fixture->version,
+        ])
+        ->assertOk();
+});
+
+test('an expired sandbox is refused with a demo_expired reason', function () {
+    $a = demoLogin($this);
+    Tournament::where('id', $a['sandbox'])->update(['demo_expires_at' => now()->subHour()]);
+    $fixture = playedGroupFixture($a['sandbox']);
+
+    $this->withToken($a['token'])
+        ->putJson("/api/matches/{$fixture->id}/result", [
+            'home_score' => 1,
+            'away_score' => 0,
+            'expected_version' => $fixture->version,
+        ])
+        ->assertForbidden()
+        ->assertJsonPath('reason', 'demo_expired');
 });
 
 test('a session cannot edit another session\'s sandbox', function () {

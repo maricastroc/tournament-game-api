@@ -2,12 +2,14 @@
 
 use App\Exceptions\InvalidTournamentStructure;
 use App\Exceptions\StaleResultException;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -27,6 +29,23 @@ return Application::configure(basePath: dirname(__DIR__))
         $exceptions->render(fn (AuthenticationException $e, Request $request) => $request->is('api/*')
             ? new JsonResponse(['message' => $e->getMessage()], 401)
             : null);
+
+        // Policy denials reach here as AccessDeniedHttpException (the framework wraps the
+        // original AuthorizationException as its previous); surface the deny code as `reason`.
+        $exceptions->render(function (AccessDeniedHttpException $e, Request $request) {
+            if (! $request->is('api/*')) {
+                return null;
+            }
+
+            $previous = $e->getPrevious();
+
+            return new JsonResponse([
+                'message' => $e->getMessage(),
+                'reason' => $previous instanceof AuthorizationException
+                    ? $previous->response()?->code()
+                    : null,
+            ], 403);
+        });
 
         $exceptions->render(fn (StaleResultException $e) => new JsonResponse([
             'message' => $e->getMessage(),
