@@ -36,8 +36,6 @@ final class AuthController extends Controller
             'token' => $user->createToken('api')->plainTextToken,
         ];
 
-        // A permanent, fully-owned copy of the demo template — no sandbox fields, so
-        // it is never reset or pruned and the user's edits stick for good.
         if ($request->boolean('seed_sample')) {
             $template = Tournament::query()->where('is_demo_template', true)->first();
 

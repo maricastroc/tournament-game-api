@@ -12,14 +12,18 @@ use App\Http\Controllers\ScenarioController;
 use App\Http\Controllers\StandingsController;
 use App\Http\Controllers\TeamController;
 use App\Http\Controllers\TournamentController;
+use App\Http\Controllers\TournamentStreamController;
 use Illuminate\Support\Facades\Route;
 
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 
+Route::get('/demo/template', [DemoController::class, 'template']);
+
 Route::get('/groups/{group}/standings', [StandingsController::class, 'show']);
 Route::get('/stages/{stage}/bracket', [BracketController::class, 'show']);
 Route::get('/tournaments/{tournament}', [TournamentController::class, 'show']);
+Route::get('/tournaments/{tournament}/stream', [TournamentStreamController::class, 'stream']);
 Route::post('/tournaments/{tournament}/scenario', [ScenarioController::class, 'store']);
 
 Route::middleware('auth:sanctum')->group(function () {

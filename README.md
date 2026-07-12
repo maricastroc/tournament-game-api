@@ -72,9 +72,13 @@ may import `Illuminate\*` or `App\Models\*`.
 - [x] Cross-engine conformance: a shared `tests/Vectors/standings.json` (byte-identical to the front end's
       copy) that both the PHP `GroupTable` and the TypeScript standings engine must reproduce — so the two
       implementations can't silently drift on tiebreaks (e.g. head-to-head).
+- [x] Live spectator stream (SSE): a per-tournament `revision` (bumped in the same save transaction)
+      backs a public `GET /api/tournaments/{id}/stream` that pushes a tiny frame on every committed
+      result. Spectators refetch the authoritative snapshot — no polling, no business rules on the wire.
+      A `TournamentUpdated` event fires after commit (the seam for a real broker); needs `PHP_CLI_SERVER_WORKERS`.
 - [x] Tests: Domain scenarios + property test + feature tests (real database + end-to-end API,
       incl. knockout advancement, penalties, the seeder, the full assembly, the what-if scenario,
-      and the demo sandbox clone/isolation/prune). **88 tests, ~3900 assertions.**
+      the demo sandbox clone/isolation/prune, and the live revision/stream). **Pest suite is green.**
 
 ## API
 
@@ -94,6 +98,7 @@ Locally they're at `/docs/api` and `/docs/api.json`, or export a static copy wit
 | `POST`         | `/api/tournaments/{tournament}/scenario`    | —     | projects hypothetical results (standings + bracket) **without persisting** — the "what if?" engine  |
 | `PUT`          | `/api/matches/{fixture}/result`             | owner | submits/edits a result → group returns standings, knockout returns bracket; 409 on version conflict |
 | `GET`          | `/api/tournaments/{tournament}`             | —     | full view (stages → groups → matches with `version`); adds `can_manage` for the token-bearing caller |
+| `GET`          | `/api/tournaments/{tournament}/stream`      | —     | Server-Sent Events: pushes a small `{revision}` frame on every committed result, so public spectator views refetch live |
 | `GET` · `POST` | `/api/tournaments`                          | owner | lists mine · creates one (draft)                                                                    |
 | `PATCH`        | `/api/tournaments/{tournament}`             | owner | renames the tournament                                                                              |
 | `DELETE`       | `/api/tournaments/{tournament}`             | owner | removes (cascade)                                                                                   |
@@ -136,6 +141,23 @@ the template — so edits never touch the shared data and concurrent visitors st
 `POST /api/demo/reset` restores a clean copy. Sandboxes expire after 24h (`DEMO_SANDBOX_TTL_HOURS`);
 run `php artisan demo:prune-sandboxes` to sweep them, or let the scheduler do it hourly (needs
 `php artisan schedule:run` on a cron in production).
+
+### Live spectator stream (SSE)
+
+`GET /api/tournaments/{id}/stream` holds a `text/event-stream` connection and pushes a small
+`{ tournament_id, revision, type, ts }` frame whenever the tournament's `revision` advances — i.e.
+a result committed. It exposes only already-public data, so no auth. Correctness comes from the
+client refetching the snapshot on each frame (and on reconnect); the revision is just the
+"ignore if not newer" guard.
+
+**Concurrency is required.** `php artisan serve` is single-process; one held stream would otherwise
+block every other request (including the organizer's save). Both `composer dev` and the Railway start
+command run **`php artisan serve --no-reload`** with `PHP_CLI_SERVER_WORKERS=8` — Laravel only honours
+the workers with `--no-reload` (the file-watcher can't fork). Trade-off in dev: the PHP server no longer
+hot-restarts on code changes, so restart it by hand (Vite still hot-reloads the front end). Timing knobs
+live in `config/sse.php` (`SSE_MAX_SECONDS`, `SSE_POLL_MS`, `SSE_RETRY_MS`, `SSE_HEARTBEAT_MS`). Behind a
+proxy/CDN, make sure it doesn't buffer the response (the endpoint sends `X-Accel-Buffering: no` +
+`Cache-Control: no-cache`).
 
 ## Notes
 

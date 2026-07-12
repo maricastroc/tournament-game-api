@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace App\Actions\Tournament;
 
 use App\Domain\Tournament\Standings\Standing;
+use App\Events\TournamentUpdated;
 use App\Exceptions\StaleResultException;
 use App\Models\Fixture;
+use App\Models\Tournament;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -31,7 +33,8 @@ final class ConfirmMatchResult
      */
     public function handle(Fixture $fixture, int $homeScore, int $awayScore, int $expectedVersion): array
     {
-        return DB::transaction(function () use ($fixture, $homeScore, $awayScore, $expectedVersion) {
+        /** @var array{standings: Standing[], tournament: Tournament} $result */
+        $result = DB::transaction(function () use ($fixture, $homeScore, $awayScore, $expectedVersion) {
             $affected = Fixture::whereKey($fixture->getKey())
                 ->where('version', $expectedVersion)
                 ->update([
@@ -46,8 +49,20 @@ final class ConfirmMatchResult
             }
 
             $group = $fixture->group()->firstOrFail();
+            $standings = $this->standings->for($group);
 
-            return $this->standings->for($group);
+            $tournament = $fixture->tournament()->firstOrFail();
+            $tournament->increment('revision');
+
+            return ['standings' => $standings, 'tournament' => $tournament];
         });
+
+        TournamentUpdated::dispatch(
+            (int) $result['tournament']->id,
+            (int) $result['tournament']->revision,
+            'result',
+        );
+
+        return $result['standings'];
     }
 }
