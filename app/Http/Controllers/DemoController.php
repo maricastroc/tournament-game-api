@@ -12,6 +12,14 @@ use Laravel\Sanctum\PersonalAccessToken;
 
 final class DemoController extends Controller
 {
+    /** The public demo tournament shown to anonymous visitors: the read-only template. */
+    public function template(): JsonResponse
+    {
+        $template = Tournament::query()->where('is_demo_template', true)->first();
+
+        return response()->json(['tournament_id' => $template?->id]);
+    }
+
     /**
      * Resets this session's demo sandbox: drops the current copy and clones a
      * fresh one from the template. One active sandbox per session token.

@@ -10,6 +10,8 @@ cmds = [
   "php artisan route:cache",
 ]
 
-# Run migrations, then start the Laravel server on Railway's $PORT
+# Run migrations, then start the Laravel server on Railway's $PORT.
+# PHP_CLI_SERVER_WORKERS lets the built-in server handle concurrent connections — required so a
+# held SSE spectator stream does not block other requests. Railway may override the count.
 [start]
-cmd = "php artisan migrate --force && php artisan serve --host 0.0.0.0 --port $PORT"
+cmd = "php artisan migrate --force && PHP_CLI_SERVER_WORKERS=${PHP_CLI_SERVER_WORKERS:-8} php artisan serve --no-reload --host 0.0.0.0 --port $PORT"

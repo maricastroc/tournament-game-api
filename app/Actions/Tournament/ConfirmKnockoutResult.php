@@ -6,8 +6,10 @@ namespace App\Actions\Tournament;
 
 use App\Domain\Tournament\Bracket\ResolvedTie;
 use App\Domain\Tournament\Input\TeamRef;
+use App\Events\TournamentUpdated;
 use App\Exceptions\StaleResultException;
 use App\Models\Fixture;
+use App\Models\Tournament;
 use Illuminate\Support\Facades\DB;
 
 final class ConfirmKnockoutResult
@@ -27,7 +29,8 @@ final class ConfirmKnockoutResult
         ?int $homePenalties = null,
         ?int $awayPenalties = null,
     ): array {
-        return DB::transaction(function () use ($fixture, $homeScore, $awayScore, $expectedVersion, $homePenalties, $awayPenalties) {
+        /** @var array{bracket: array{ties: ResolvedTie[], champion: ?TeamRef}, tournament: Tournament} $result */
+        $result = DB::transaction(function () use ($fixture, $homeScore, $awayScore, $expectedVersion, $homePenalties, $awayPenalties) {
             $affected = Fixture::whereKey($fixture->getKey())
                 ->where('version', $expectedVersion)
                 ->update([
@@ -43,7 +46,20 @@ final class ConfirmKnockoutResult
                 throw new StaleResultException($fixture->getKey(), $expectedVersion);
             }
 
-            return $this->bracket->for($fixture->stage()->firstOrFail());
+            $bracket = $this->bracket->for($fixture->stage()->firstOrFail());
+
+            $tournament = $fixture->tournament()->firstOrFail();
+            $tournament->increment('revision');
+
+            return ['bracket' => $bracket, 'tournament' => $tournament];
         });
+
+        TournamentUpdated::dispatch(
+            (int) $result['tournament']->id,
+            (int) $result['tournament']->revision,
+            'result',
+        );
+
+        return $result['bracket'];
     }
 }

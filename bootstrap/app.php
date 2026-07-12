@@ -29,9 +29,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $exceptions->render(fn (AuthenticationException $e, Request $request) => $request->is('api/*')
             ? new JsonResponse(['message' => $e->getMessage()], 401)
             : null);
-
-        // Policy denials reach here as AccessDeniedHttpException (the framework wraps the
-        // original AuthorizationException as its previous); surface the deny code as `reason`.
+            
         $exceptions->render(function (AccessDeniedHttpException $e, Request $request) {
             if (! $request->is('api/*')) {
                 return null;
