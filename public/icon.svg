@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" viewBox="0 0 182 180">
+  <!-- Generator: Adobe Illustrator 30.6.0, SVG Export Plug-In . SVG Version: 2.1.4 Build 109)  -->
+  <defs>
+    <style>
+      .st0 {
+        fill: url(#linear-gradient);
+      }
+
+      .st1 {
+        stroke-width: 4px;
+      }
+
+      .st1, .st2 {
+        fill: none;
+        stroke: #1a1205;
+        stroke-linecap: round;
+      }
+
+      .st2 {
+        stroke-width: 5px;
+      }
+
+      .st3 {
+        isolation: isolate;
+        opacity: .55;
+      }
+
+      .st3, .st4 {
+        fill: #1a1205;
+      }
+
+      .st5 {
+        opacity: .32;
+      }
+    </style>
+    <linearGradient id="linear-gradient" x1="-205.85" y1="509.05" x2="-204.85" y2="508.05" gradientTransform="translate(37053 91629.1697) scale(180 -180)" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#f2a93b"/>
+      <stop offset="1" stop-color="#c9791f"/>
+    </linearGradient>
+  </defs>
+  <rect class="st0" width="180" height="180" rx="42" ry="42"/>
+  <g class="st5">
+    <path class="st1" d="M2.63,36.21h29.56v26.61h23.65"/>
+    <path class="st1" d="M2.63,136.72h29.56v-26.61h23.65"/>
+    <path class="st1" d="M180,36.21h-29.56v26.61h-23.65"/>
+    <path class="st1" d="M180,136.72h-29.56v-26.61h-23.65"/>
+  </g>
+  <g>
+    <path class="st4" d="M64.71,30.29h53.21v20.69c0,29.56-11.82,50.26-26.61,50.26s-26.61-20.69-26.61-50.26v-20.69Z"/>
+    <rect class="st4" x="85.4" y="101.24" width="11.82" height="26.61"/>
+    <path class="st4" d="M61.75,127.85h59.12c2.96,0,4.43,2.96,4.43,5.91v8.87H57.32v-8.87c0-2.96,1.48-5.91,4.43-5.91Z"/>
+  </g>
+  <g>
+    <path class="st2" d="M64.71,36.21c-23.65,0-29.56,32.52-8.87,44.34"/>
+    <path class="st2" d="M117.92,36.21c23.65,0,29.56,32.52,8.87,44.34"/>
+  </g>
+  <path class="st3" d="M78.01,142.63h26.61c2.45,0,4.43,1.99,4.43,4.43h0c0,2.45-1.99,4.43-4.43,4.43h-26.61c-2.45,0-4.43-1.99-4.43-4.43h0c0-2.45,1.99-4.43,4.43-4.43Z"/>
+</svg>
