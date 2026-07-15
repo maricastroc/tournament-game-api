@@ -1,12 +1,33 @@
-# Gauntlet
+<h1 align="center">
+  <br>
+  <img src="public/icon.svg" alt="Gauntlet API" width="40">
+  <br>
+  Gauntlet API
+  <br>
+</h1>
 
-Tournament management API. The engineering value isn't in the screens — it's in keeping the
-**state always coherent**: standings, tiebreak criteria, and bracket advancement that
-recompute, within a transaction, on every result submitted.
+<h4 align="center">Tournament management API where state is a projection, not a datum.</h4>
 
-Core principle: **state is a projection, not a datum.** The source of truth is the match
-results; standings, goal difference, who advanced, and the champion are all _derived_ by pure
-functions. Editing a result means recomputing the projection — not syncing mutable state.
+<p align="center">
+  <img src="https://img.shields.io/badge/PHP-777BB4?style=for-the-badge&logo=php&logoColor=white" alt="PHP" />
+  <img src="https://img.shields.io/badge/Laravel-FF2D20?style=for-the-badge&logo=laravel&logoColor=white" alt="Laravel" />
+  <img src="https://img.shields.io/badge/Pest-6C5CE7?style=for-the-badge&logo=pest&logoColor=white" alt="Pest" />
+  <img src="https://img.shields.io/badge/SQLite-003B57?style=for-the-badge&logo=sqlite&logoColor=white" alt="SQLite" />
+  <img src="https://img.shields.io/badge/PostgreSQL-4169E1?style=for-the-badge&logo=postgresql&logoColor=white" alt="PostgreSQL" />
+</p>
+
+<p align="center">
+  <a href="#architecture">Architecture</a> •
+  <a href="#current-state">Current State</a> •
+  <a href="#api">API</a> •
+  <a href="#running">Running</a>
+</p>
+
+<p align="center">
+  The engineering value isn't in the screens — it's in keeping the <strong>state always coherent</strong>: standings, tiebreak criteria, and bracket advancement that recompute, within a transaction, on every result submitted. The source of truth is the match results; standings, goal difference, who advanced, and the champion are all <em>derived</em> by pure functions — editing a result means recomputing the projection, not syncing mutable state.
+</p>
+
+<br/>
 
 ## Architecture
 
