@@ -58,7 +58,7 @@ test('registering with seed_sample gives the new user their own permanent copy',
         ->and($sample->is_demo_template)->toBeFalse()
         ->and($sample->demo_token_id)->toBeNull()
         ->and($sample->demo_expires_at)->toBeNull();
-.
+
     $fixture = playedKnockoutFixture($sample->id);
 
     $this->withToken($body['token'])

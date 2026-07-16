@@ -57,6 +57,24 @@ app/Domain/Tournament/
 **Dependency rule:** `Laravel → Domain`, never the other way around. Nothing in `app/Domain`
 may import `Illuminate\*` or `App\Models\*`.
 
+### "Projection", precisely — a read-model, not event sourcing
+
+To preempt the obvious question: **this is a derived read-model, not event sourcing.** There is
+no event store, no aggregate, no replay. Match results are the single source of truth, persisted
+as ordinary rows in `matches`; recording a result is a plain `UPDATE` under an optimistic lock
+([`ConfirmMatchResult`](app/Actions/Tournament/ConfirmMatchResult.php)).
+
+What _is_ derived is everything downstream. Standings, tiebreaks, goal difference and bracket
+advancement hold **zero stored state** — they are recomputed by the pure `GroupTable` /
+`BracketResolver` engines on every read and, on every write, inside the same transaction that
+recorded the result. So "projection" here is the **CQRS read-model** sense (a computed view over
+the results table), not an event-sourced projection over a log.
+
+The claim is narrow and deliberate: _no denormalized standings can ever drift from the results,
+because there is nothing denormalized to drift._ The cost that buys — recompute on every read —
+is affordable precisely because a tournament's state is small and bounded; event sourcing would
+be machinery this domain doesn't need.
+
 ## Current state
 
 - [x] `GroupTable` — pure standings engine, with configurable criteria and recursive
