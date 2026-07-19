@@ -27,6 +27,10 @@
   The engineering value isn't in the screens — it's in keeping the <strong>state always coherent</strong>: standings, tiebreak criteria, and bracket advancement that recompute, within a transaction, on every result submitted. The source of truth is the match results; standings, goal difference, who advanced, and the champion are all <em>derived</em> by pure functions — editing a result means recomputing the projection, not syncing mutable state.
 </p>
 
+<p align="center">
+  🔗 <strong>Live demo:</strong> <a href="https://gauntlet-api.marianacastro.dev/docs/api">urban-system.marianacastro.dev</a>
+</p>
+
 <br/>
 
 ## Architecture
