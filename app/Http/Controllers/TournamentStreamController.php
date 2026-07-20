@@ -58,8 +58,6 @@ final class TournamentStreamController extends Controller
         $lastBeatAt = time();
 
         while (time() < $deadline && ! connection_aborted()) {
-            // Block until the revision advances or the wait window elapses. Cap the wait at the
-            // heartbeat interval (and never past the deadline) so an idle stream still pings.
             $waitMs = min($stream->heartbeatMs, max(0, ($deadline - time()) * 1000));
             $revision = $channel->awaitChange($tournamentId, $lastRevision, (int) $waitMs);
 

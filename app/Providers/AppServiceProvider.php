@@ -13,12 +13,8 @@ use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
 {
-    /**
-     * Register any application services.
-     */
     public function register(): void
     {
-        // The spectator stream's change-detection transport, chosen by config/sse.php: 'driver'.
         $this->app->bind(RevisionChannel::class, function ($app): RevisionChannel {
             $config = $app['config'];
 
@@ -38,22 +34,8 @@ class AppServiceProvider extends ServiceProvider
         Gate::define('viewApiDocs', fn ($user = null) => true);
 
         $this->configureRateLimiting();
-
-        // The TournamentUpdated -> PublishTournamentUpdate wiring (redis stream driver) is registered
-        // by Laravel's listener auto-discovery from app/Listeners; the listener is a no-op under the
-        // default 'poll' driver.
     }
 
-    /**
-     * Rate limiter for the unauthenticated credential endpoints (/login, /register).
-     *
-     * Two tiers, both keyed so a 429 carries a Retry-After:
-     *   - 5/min per (email + IP): throttles a targeted attack (guessing one account's
-     *     password, or hammering one email at register) without letting an attacker lock a
-     *     victim out globally — the key includes the attacker's own IP.
-     *   - 20/min per IP: a blast-radius cap on credential stuffing / signup spam that rotates
-     *     the email to dodge the first tier.
-     */
     private function configureRateLimiting(): void
     {
         RateLimiter::for('auth', function (Request $request) {

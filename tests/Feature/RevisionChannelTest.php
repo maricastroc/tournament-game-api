@@ -46,7 +46,6 @@ test('the polling channel returns immediately when the revision already advanced
 
     $channel = new PollingRevisionChannel(pollMs: 1000);
 
-    // known (0) < current (1): returns without spending the poll interval.
     expect($channel->awaitChange((int) $tournament->id, 0, 50))->toBe(1);
 });
 

@@ -42,24 +42,19 @@ final class RedisRevisionChannel implements RevisionChannel
 
         try {
             $client = Redis::connection($this->connection);
-            // Bound the blocking read so the loop can still heartbeat, honour its deadline, and
-            // notice an aborted client. phpredis raises on this timeout; we treat that as "no news".
             $client->setOption(\Redis::OPT_READ_TIMEOUT, max(0.05, $timeoutMs / 1000));
             $client->subscribe([$this->channelFor($tournamentId)], function ($redis, $channel, $message) use (&$observed): void {
                 $decoded = json_decode((string) $message, true);
                 if (is_array($decoded) && isset($decoded['revision'])) {
                     $observed = (int) $decoded['revision'];
                 }
-                // We only need the first nudge — closing the client breaks out of the blocking loop.
+
                 $redis->close();
             });
         } catch (Throwable) {
-            // Read timeout (no message in the window) or any transport hiccup: fall through to a
-            // final snapshot read so the caller still gets an authoritative answer.
+            //
         }
 
-        // Re-read: catches a publish that landed between the first read and the subscribe, and gives
-        // a correct value even if the subscribe path errored out.
         $after = $this->current($tournamentId);
         if ($after > $knownRevision) {
             return $after;

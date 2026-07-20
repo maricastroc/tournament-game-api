@@ -21,12 +21,10 @@ test('login throttles after 5 failed attempts from the same email + ip', functio
 
     $wrong = ['email' => 'victim@example.com', 'password' => 'not-the-password'];
 
-    // The limiter allows 5 tries; each is rejected by the controller as bad credentials (422).
     for ($i = 0; $i < 5; $i++) {
         $this->postJson('/api/login', $wrong)->assertStatus(422);
     }
 
-    // The 6th never reaches the controller — the limiter short-circuits it.
     $this->postJson('/api/login', $wrong)
         ->assertStatus(429)
         ->assertHeader('Retry-After');
@@ -39,8 +37,6 @@ test('register throttles a repeated hammering of the same email', function () {
         'password' => 'password123',
     ];
 
-    // 1st creates the account; 2nd–5th fail on the unique-email rule (422) but still count
-    // against the limiter, so the 6th is blocked.
     $this->postJson('/api/register', $payload())->assertCreated();
 
     for ($i = 0; $i < 4; $i++) {
